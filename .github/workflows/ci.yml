@@ -1,0 +1,46 @@
+name: CI
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: services/taskboard/go.mod
+          cache-dependency-path: services/taskboard/go.sum
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.16.0'
+          cache: npm
+          cache-dependency-path: services/taskboard/web/package-lock.json
+      - run: make check
+      - run: make archive
+      - uses: actions/upload-artifact@v4
+        with:
+          name: homework-01
+          path: artifacts/homework-01.zip
+  integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: services/taskboard/go.mod
+          cache-dependency-path: services/taskboard/go.sum
+      - run: make up
+      - run: make integration
+      - run: make migrate
+      - if: always()
+        run: docker compose -f services/taskboard/compose.yaml logs
+      - if: always()
+        run: make down
