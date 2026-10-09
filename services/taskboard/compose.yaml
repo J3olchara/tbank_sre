@@ -1,0 +1,46 @@
+name: tbank-sre-hw01
+x-app: &app
+  image: tbank-sre-taskboard:hw01
+  build: .
+  environment:
+    DATABASE_URL: postgresql://${POSTGRES_USER:-taskboard}:${POSTGRES_PASSWORD:-taskboard_local}@db:5432/${POSTGRES_DB:-taskboard}?sslmode=disable&connect_timeout=3
+    PORT: "8080"
+    LOG_LEVEL: ${LOG_LEVEL:-INFO}
+  read_only: true
+  security_opt:
+    - no-new-privileges:true
+services:
+  db:
+    image: postgres:17.6-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-taskboard}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-taskboard_local}
+      POSTGRES_DB: ${POSTGRES_DB:-taskboard}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+  migrate:
+    <<: *app
+    command: ["migrate"]
+    depends_on:
+      db:
+        condition: service_healthy
+  web:
+    <<: *app
+    ports:
+      - "127.0.0.1:${APP_PORT:-8080}:8080"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    stop_grace_period: 15s
+    healthcheck:
+      test: ["CMD", "/srv/taskboard", "healthcheck"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+volumes:
+  postgres_data:
