@@ -16,10 +16,13 @@ import (
 	"unicode/utf8"
 )
 
-type API struct{ db *sql.DB }
+type API struct {
+	db      *sql.DB
+	metrics *Metrics
+}
 
-func NewHandler(db *sql.DB, staticDir string) http.Handler {
-	api := &API{db: db}
+func NewHandler(db *sql.DB, staticDir string, metrics *Metrics) http.Handler {
+	api := &API{db: db, metrics: metrics}
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) { respond(w, 200, map[string]string{"status": "ok"}) })
 	mux.HandleFunc("GET /readyz", api.ready)
@@ -33,7 +36,7 @@ func NewHandler(db *sql.DB, staticDir string) http.Handler {
 	mux.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, filepath.Join(staticDir, "index.html"))
 	})
-	return logRequests(mux)
+	return logRequests(mux, metrics)
 }
 func respond(w http.ResponseWriter, status int, data any) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -102,6 +105,7 @@ func (api *API) list(w http.ResponseWriter, r *http.Request) {
 		dbFailure(w, err)
 		return
 	}
+	api.metrics.listed.Inc()
 	respond(w, 200, tasks)
 }
 func (api *API) get(w http.ResponseWriter, r *http.Request) {
@@ -116,6 +120,7 @@ func (api *API) get(w http.ResponseWriter, r *http.Request) {
 		dbFailure(w, err)
 		return
 	}
+	api.metrics.read.Inc()
 	respond(w, 200, task)
 }
 
@@ -169,8 +174,11 @@ func (api *API) save(w http.ResponseWriter, r *http.Request) {
 	}
 	code := 200
 	if r.Method == http.MethodPost {
+		api.metrics.created.Inc()
 		code = 201
 		w.Header().Set("Location", "/api/tasks/"+strconv.FormatInt(task.ID, 10))
+	} else {
+		api.metrics.updated.Inc()
 	}
 	respond(w, code, task)
 }
@@ -195,6 +203,7 @@ func (api *API) delete(w http.ResponseWriter, r *http.Request) {
 		fail(w, 404, "Задача не найдена")
 		return
 	}
+	api.metrics.deleted.Inc()
 	w.WriteHeader(204)
 }
 
@@ -213,7 +222,7 @@ func (w *loggedResponse) Write(data []byte) (int, error) {
 	}
 	return w.ResponseWriter.Write(data)
 }
-func logRequests(next http.Handler) http.Handler {
+func logRequests(next http.Handler, metrics *Metrics) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 		response := &loggedResponse{ResponseWriter: w}
@@ -223,6 +232,18 @@ func logRequests(next http.Handler) http.Handler {
 		if response.status == 0 {
 			response.status = 200
 		}
+		route := r.Pattern
+		if route == "" {
+			route = "unmatched"
+		}
+		method := r.Method
+		switch method {
+		case "GET", "HEAD", "POST", "PUT", "DELETE", "PATCH", "OPTIONS":
+		default:
+			method = "OTHER"
+		}
+		metrics.requests.WithLabelValues(method, route, strconv.Itoa(response.status)).Inc()
+		metrics.duration.WithLabelValues(method, route).Observe(time.Since(start).Seconds())
 		slog.Info("http_request", "method", r.Method, "path", r.URL.Path, "status", response.status, "duration_ms", time.Since(start).Milliseconds())
 	})
 }

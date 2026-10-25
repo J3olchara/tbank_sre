@@ -1,0 +1,64 @@
+# victoria-metrics-single chart 0.49.0 (VictoriaMetrics v1.154.0).
+# Built-in scraper: a separate vmagent is unnecessary for this single-node lab.
+rbac:
+  create: false
+serviceAccount:
+  create: true
+  name: vm-single
+server:
+  fullnameOverride: vm-single
+  retentionPeriod: 1d
+  persistentVolume:
+    enabled: true
+    size: 1Gi
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: "1"
+      memory: 512Mi
+  extraArgs:
+    memory.allowedPercent: "60"
+    search.latencyOffset: 1s
+    search.disableCache: "true"
+  service:
+    type: ClusterIP
+  scrape:
+    enabled: true
+    config:
+      global:
+        scrape_interval: 5s
+        scrape_timeout: 4s
+      scrape_configs:
+        - job_name: annotated-pods
+          kubernetes_sd_configs:
+            - role: pod
+              namespaces:
+                names: [taskboard-lab]
+          relabel_configs:
+            - action: keep
+              source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+              regex: "true"
+            - action: keep
+              source_labels: [__meta_kubernetes_pod_phase]
+              regex: Running
+            # Pod SD emits a candidate per declared container port. Keep exactly
+            # the port from the annotation, including for the PostgreSQL sidecar.
+            - action: keep_if_equal
+              source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_port, __meta_kubernetes_pod_container_port_number]
+            - source_labels: [__meta_kubernetes_pod_ip, __meta_kubernetes_pod_annotation_prometheus_io_port]
+              regex: '(.+);([0-9]+)'
+              replacement: '$1:$2'
+              target_label: __address__
+            - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+              regex: '(.+)'
+              target_label: __metrics_path__
+            - source_labels: [__meta_kubernetes_pod_label_app]
+              target_label: job
+            - source_labels: [__meta_kubernetes_namespace]
+              target_label: namespace
+            - source_labels: [__meta_kubernetes_pod_name]
+              target_label: pod
+            - source_labels: [__meta_kubernetes_pod_container_name]
+              target_label: container

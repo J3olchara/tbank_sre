@@ -36,3 +36,15 @@
 - После изменений манифестов: `make k8s-validate`, deploy, scale и CRUD через Service.
 - `make archive-hw02` требует настоящий скринкаст <=7 минут; не подменять видео
   анимацией команд или текстовым сценарием. Видео и ZIP не коммитить.
+
+## Мониторинг (домашняя работа 04)
+
+- Метрики Go — `internal/taskboard/metrics.go`, отдельный внутренний listener 9090.
+  Не открывать `/metrics` на API-порту и не добавлять пользовательские ID в labels.
+- VictoriaMetrics Single ставится официальным Helm-чартом 0.49.0; values/RBAC в
+  `deploy/monitoring`, команды `make monitoring-*`. Встроенный scraper использует pod SD.
+- PostgreSQL exporter — sidecar на 9187, пароль только через Secret.
+- Проверять counters на успешных операциях и 400/404, OpenMetrics, fresh samples
+  в TSDB и discovery при изменении числа реплик. Рантайм-метрики не должны зависеть от БД.
+- `make archive-hw04` включает настоящий скринкаст, отчёт, все исходники/манифесты
+  и Helm render; рабочие секреты и сгенерированные бинарные артефакты не коммитить.

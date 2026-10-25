@@ -30,7 +30,7 @@ func TestInputValidation(t *testing.T) {
 	}
 }
 func TestMalformedRequestsDoNotReachDatabase(t *testing.T) {
-	handler := NewHandler(nil, t.TempDir())
+	handler := NewHandler(nil, t.TempDir(), NewMetrics())
 	cases := []struct {
 		method, path, body, contentType string
 		code                            int

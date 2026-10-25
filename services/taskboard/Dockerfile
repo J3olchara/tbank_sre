@@ -19,5 +19,5 @@ COPY --from=backend /taskboard /srv/taskboard
 COPY --from=frontend /web/dist /srv/web/dist
 ENV PORT=8080 STATIC_DIR=/srv/web/dist LOG_LEVEL=INFO
 USER 10001:10001
-EXPOSE 8080
+EXPOSE 8080 9090
 ENTRYPOINT ["/srv/taskboard"]

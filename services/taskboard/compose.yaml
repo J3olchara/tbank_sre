@@ -5,6 +5,7 @@ x-app: &app
   environment:
     DATABASE_URL: postgresql://${POSTGRES_USER:-taskboard}:${POSTGRES_PASSWORD:-taskboard_local}@db:5432/${POSTGRES_DB:-taskboard}?sslmode=disable&connect_timeout=3
     PORT: "8080"
+    METRICS_ADDR: "0.0.0.0:9090"
     LOG_LEVEL: ${LOG_LEVEL:-INFO}
   read_only: true
   security_opt:
