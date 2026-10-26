@@ -1,0 +1,24 @@
+# Discovery is restricted to the application namespace, not the whole cluster.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: vm-pod-discovery
+  namespace: taskboard-lab
+rules:
+  - apiGroups: [""]
+    resources: [pods]
+    verbs: [get, list, watch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: vm-pod-discovery
+  namespace: taskboard-lab
+subjects:
+  - kind: ServiceAccount
+    name: vm-single
+    namespace: monitoring
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: vm-pod-discovery

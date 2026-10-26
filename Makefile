@@ -43,3 +43,17 @@ k8s-validate:
 	bash scripts/k8s.sh validate
 archive-hw02:
 	python3 scripts/package_hw02.py
+
+.PHONY: monitoring-install monitoring-status monitoring-forward monitoring-check monitoring-render archive-hw04
+monitoring-install:
+	bash scripts/monitoring.sh install
+monitoring-status:
+	bash scripts/monitoring.sh status
+monitoring-forward:
+	bash scripts/monitoring.sh forward
+monitoring-check:
+	python3 scripts/check_monitoring.py
+monitoring-render:
+	bash scripts/monitoring.sh render
+archive-hw04:
+	python3 scripts/package_hw04.py
