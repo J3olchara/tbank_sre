@@ -25,3 +25,21 @@ integration:
 	cd $(APP) && TASKBOARD_URL=$${TASKBOARD_URL:-http://127.0.0.1:8080} GOCACHE=$(GO_CACHE) go test -tags=integration ./integration -count=1
 archive:
 	python3 scripts/package_hw01.py
+
+.PHONY: k8s-start k8s-build k8s-deploy k8s-status k8s-scale k8s-forward k8s-validate archive-hw02
+k8s-start:
+	bash scripts/k8s.sh start
+k8s-build:
+	bash scripts/k8s.sh build
+k8s-deploy:
+	bash scripts/k8s.sh deploy
+k8s-status:
+	bash scripts/k8s.sh status
+k8s-scale:
+	bash scripts/k8s.sh scale $(or $(REPLICAS),3)
+k8s-forward:
+	bash scripts/k8s.sh forward
+k8s-validate:
+	bash scripts/k8s.sh validate
+archive-hw02:
+	python3 scripts/package_hw02.py

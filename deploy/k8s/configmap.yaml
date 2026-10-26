@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: taskboard-config
+  namespace: taskboard-lab
+data:
+  POSTGRES_DB: taskboard
+  POSTGRES_USER: taskboard
+  PORT: "8080"
+  LOG_LEVEL: INFO

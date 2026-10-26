@@ -5,3 +5,7 @@ __pycache__/
 node_modules/
 dist/
 artifacts/*.zip
+*.mp4
+*.webm
+/.tools/
+/artifacts/

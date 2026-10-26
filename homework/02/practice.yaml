@@ -1,0 +1,28 @@
+# Standalone practice workload; unrelated to the application database.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: practice-http
+  namespace: taskboard-lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: practice-http
+  template:
+    metadata:
+      labels:
+        app: practice-http
+    spec:
+      containers:
+        - name: http
+          image: nginx:1.28-alpine
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: 50m
+              memory: 16Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi

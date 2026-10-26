@@ -44,3 +44,36 @@ jobs:
         run: docker compose -f services/taskboard/compose.yaml logs
       - if: always()
         run: make down
+
+  kubernetes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: services/taskboard/go.mod
+          cache-dependency-path: services/taskboard/go.sum
+      - name: Install minikube and kubectl (verified checksums)
+        run: |
+          bash scripts/install_k8s_tools.sh
+          echo "$PWD/.tools/bin" >> "$GITHUB_PATH"
+      - run: make k8s-start k8s-build k8s-deploy k8s-validate
+      - run: make k8s-scale REPLICAS=3
+      - name: CRUD through Kubernetes Service
+        run: |
+          bash scripts/k8s.sh forward > /tmp/forward.log 2>&1 &
+          forward_pid=$!
+          trap 'kill "$forward_pid" || true' EXIT
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:18080/readyz; then break; fi
+            echo "Waiting for readiness ($attempt/30)"
+            sleep 1
+          done
+          TASKBOARD_URL=http://127.0.0.1:18080 make integration
+      - if: always()
+        run: |
+          kubectl --context tbank-sre-hw02 -n taskboard-lab get pods,svc,pvc,job
+          kubectl --context tbank-sre-hw02 -n taskboard-lab get events --sort-by=.lastTimestamp
+      - if: always()
+        run: minikube delete -p tbank-sre-hw02
