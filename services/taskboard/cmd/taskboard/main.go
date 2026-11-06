@@ -55,7 +55,14 @@ func run() error {
 		return taskboard.Migrate(ctx, db)
 	}
 	metrics := taskboard.NewMetrics()
-	handler := taskboard.NewHandler(db, env("STATIC_DIR", "web/dist"), metrics)
+	demo, err := taskboard.ParseDemoConfig(os.Getenv("DEMO_FAILURE_EVERY"), os.Getenv("DEMO_LATENCY"))
+	if err != nil {
+		return err
+	}
+	if demo.FailureEvery > 0 || demo.Latency > 0 {
+		slog.Warn("demo_behavior_enabled", "failure_every", demo.FailureEvery, "latency", demo.Latency.String())
+	}
+	handler := taskboard.NewHandlerWithDemo(db, env("STATIC_DIR", "web/dist"), metrics, demo)
 	server := &http.Server{Addr: ":" + env("PORT", "8080"), Handler: handler,
 		ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 10 * time.Second, WriteTimeout: 15 * time.Second, IdleTimeout: 60 * time.Second}
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)

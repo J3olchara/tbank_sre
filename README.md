@@ -27,6 +27,9 @@ make down            # остановить, сохранив данные Postg
 Материалы: [домашка 01](homework/01/README.md), [отчёт](homework/01/Отчёт.md),
 [разработка](docs/development.md), [правила кода](AGENTS.md).
 
+[Памятка для защиты проекта](docs/defense.md): архитектура, 12 факторов,
+Kubernetes, логирование, ограничения и команды для демонстрации.
+
 ## Домашняя работа 02 — minikube
 
 ```sh
@@ -65,3 +68,19 @@ make logging-forward  # UI: http://127.0.0.1:9428/select/vmui/
 
 [Инструкция](homework/03/README.md), [отчёт с четырьмя скриншотами vmui](homework/03/Отчёт.md).
 JSON stdout → Vector DaemonSet → VictoriaLogs; архив для сдачи: `make archive-hw03`.
+
+## Домашняя работа 05 — SLI, SLO и SLA
+
+```sh
+make k8s-build k8s-deploy
+make k8s-scale REPLICAS=3
+make monitoring-install slo-install
+make slo-load-start
+make monitoring-forward  # vmui: http://127.0.0.1:8428/vmui/
+```
+
+[Инструкция](homework/05/README.md), [отчёт с графиками](homework/05/Отчёт.md).
+Три SLI на HTTP/histogram/бизнес-счётчиках, Go-пробер UI/API и TBSLO по минутам.
+Режимы `make slo-mode MODE=slow|errors|healthy` демонстрируют деградацию и восстановление.
+После демонстрации вернуть healthy и выполнить `make slo-load-stop`.
+Для сдачи: `make slo-render`, `python3 scripts/record_hw05.py`, `make archive-hw05`.

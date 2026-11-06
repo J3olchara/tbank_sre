@@ -1,0 +1,7 @@
+# Keep the official 0.49.0 chart and existing pod discovery configuration.
+# 30-day objectives need more than the HW04 one-day retention.
+server:
+  retentionPeriod: 35d
+  extraArgs:
+    # Nested 30d / 1m / 5s TBSLO needs ~518,600 points (default: 100,000).
+    search.maxPointsSubqueryPerTimeseries: "600000"

@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: taskboard-prober
+  namespace: taskboard-lab
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: taskboard-prober
+  template:
+    metadata:
+      labels:
+        app: taskboard-prober
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9091"
+        prometheus.io/path: /metrics
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: prober
+          image: tbank-sre-taskboard:hw02
+          imagePullPolicy: Never
+          command: [/srv/taskboard-prober]
+          env:
+            - name: PROBE_TARGET
+              value: http://taskboard.taskboard-lab.svc.cluster.local:8080
+            - name: PROBE_INTERVAL
+              value: 5s
+            - name: PROBE_TIMEOUT
+              value: 2s
+          ports:
+            - name: metrics
+              containerPort: 9091
+          resources:
+            requests:
+              cpu: 25m
+              memory: 16Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: metrics
+            periodSeconds: 3
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: metrics
+            periodSeconds: 10
