@@ -2,6 +2,7 @@ package prober
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -76,6 +77,32 @@ func TestProbeDeadlineAndConfiguration(t *testing.T) {
 	start := time.Now()
 	if err := p.Check(context.Background()); err == nil || time.Since(start) > time.Second || metricValue(t, p.success) != 0 {
 		t.Fatal("probe must fail on timeouts")
+	}
+}
+
+func TestProbeAcceptsMaximumValidTaskList(t *testing.T) {
+	tasks := make([]map[string]any, 500)
+	for i := range tasks {
+		tasks[i] = map[string]any{"id": i + 1, "title": strings.Repeat("<", 200), "description": strings.Repeat("<", 2000), "status": "todo"}
+	}
+	encoded, err := json.Marshal(tasks)
+	if err != nil {
+		t.Fatal(err)
+	}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/" {
+			_, _ = w.Write([]byte(`<div id="root"></div><script></script>`))
+			return
+		}
+		_, _ = w.Write(encoded)
+	}))
+	defer server.Close()
+	p, err := New(server.URL, 2*time.Second)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := p.Check(context.Background()); err != nil {
+		t.Fatalf("a valid full task list must not look like an outage: %v", err)
 	}
 }
 

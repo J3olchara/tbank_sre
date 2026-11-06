@@ -68,7 +68,8 @@ func (p *Prober) get(ctx context.Context, path string) ([]byte, error) {
 	if response.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("probe %s returned HTTP %d", path, response.StatusCode)
 	}
-	const maximum = 2 * 1024 * 1024
+	// 500 valid tasks can exceed 6 MiB after JSON escaping of title/description.
+	const maximum = 8 * 1024 * 1024
 	body, err := io.ReadAll(io.LimitReader(response.Body, maximum+1))
 	if err != nil || len(body) > maximum {
 		return nil, fmt.Errorf("probe response is unreadable or too large")
@@ -112,6 +113,9 @@ func (p *Prober) Check(ctx context.Context) (err error) {
 		if task.ID < 1 || task.Title == "" || (task.Status != "todo" && task.Status != "doing" && task.Status != "done") {
 			return fmt.Errorf("probe task schema is invalid")
 		}
+	}
+	if ctx.Err() != nil {
+		return fmt.Errorf("probe deadline exceeded")
 	}
 	return nil
 }
