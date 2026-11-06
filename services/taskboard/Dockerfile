@@ -12,10 +12,14 @@ RUN go mod download
 COPY cmd ./cmd
 COPY internal ./internal
 RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /taskboard ./cmd/taskboard
+RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /taskboard-prober ./cmd/taskboard-prober
+RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /taskboard-load ./cmd/taskboard-load
 
 FROM alpine:3.23.3
 WORKDIR /srv
 COPY --from=backend /taskboard /srv/taskboard
+COPY --from=backend /taskboard-prober /srv/taskboard-prober
+COPY --from=backend /taskboard-load /srv/taskboard-load
 COPY --from=frontend /web/dist /srv/web/dist
 ENV PORT=8080 STATIC_DIR=/srv/web/dist LOG_LEVEL=INFO
 USER 10001:10001

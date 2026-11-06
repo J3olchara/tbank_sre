@@ -23,15 +23,20 @@ type API struct {
 }
 
 func NewHandler(db *sql.DB, staticDir string, metrics *Metrics) http.Handler {
+	return NewHandlerWithDemo(db, staticDir, metrics, DemoConfig{})
+}
+
+func NewHandlerWithDemo(db *sql.DB, staticDir string, metrics *Metrics, config DemoConfig) http.Handler {
 	api := &API{db: db, metrics: metrics}
+	demo := &demoBehavior{config: config}
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) { respond(w, 200, map[string]string{"status": "ok"}) })
 	mux.HandleFunc("GET /readyz", api.ready)
-	mux.HandleFunc("GET /api/tasks", api.list)
-	mux.HandleFunc("GET /api/tasks/{id}", api.get)
-	mux.HandleFunc("POST /api/tasks", api.save)
-	mux.HandleFunc("PUT /api/tasks/{id}", api.save)
-	mux.HandleFunc("DELETE /api/tasks/{id}", api.delete)
+	mux.HandleFunc("GET /api/tasks", demo.wrap(api.list))
+	mux.HandleFunc("GET /api/tasks/{id}", demo.wrap(api.get))
+	mux.HandleFunc("POST /api/tasks", demo.wrap(api.save))
+	mux.HandleFunc("PUT /api/tasks/{id}", demo.wrap(api.save))
+	mux.HandleFunc("DELETE /api/tasks/{id}", demo.wrap(api.delete))
 	mux.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) { fail(w, 404, "Маршрут не найден") })
 	mux.Handle("GET /assets/", http.FileServer(http.Dir(staticDir)))
 	mux.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
