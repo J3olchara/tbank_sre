@@ -2,6 +2,7 @@ package taskboard
 
 import (
 	"context"
+	"crypto/rand"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -225,6 +226,8 @@ func (w *loggedResponse) Write(data []byte) (int, error) {
 func logRequests(next http.Handler, metrics *Metrics) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
+		requestID := rand.Text()
+		w.Header().Set("X-Request-ID", requestID)
 		response := &loggedResponse{ResponseWriter: w}
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self'; frame-ancestors 'none'")
@@ -244,6 +247,14 @@ func logRequests(next http.Handler, metrics *Metrics) http.Handler {
 		}
 		metrics.requests.WithLabelValues(method, route, strconv.Itoa(response.status)).Inc()
 		metrics.duration.WithLabelValues(method, route).Observe(time.Since(start).Seconds())
-		slog.Info("http_request", "method", r.Method, "path", r.URL.Path, "status", response.status, "duration_ms", time.Since(start).Milliseconds())
+		level := slog.LevelInfo
+		if response.status >= 500 {
+			level = slog.LevelError
+		} else if response.status >= 400 {
+			level = slog.LevelWarn
+		}
+		slog.Log(r.Context(), level, "http_request", "request.id", requestID,
+			"method", r.Method, "path", r.URL.Path, "route", route, "status", response.status,
+			"duration_ms", float64(time.Since(start))/float64(time.Millisecond))
 	})
 }

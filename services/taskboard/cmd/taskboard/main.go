@@ -12,6 +12,7 @@ import (
 	"time"
 
 	_ "github.com/lib/pq"
+	"tbank-sre/taskboard/internal/logging"
 	"tbank-sre/taskboard/internal/taskboard"
 )
 
@@ -20,7 +21,7 @@ func run() error {
 	if err := level.UnmarshalText([]byte(env("LOG_LEVEL", "INFO"))); err != nil {
 		return fmt.Errorf("invalid LOG_LEVEL")
 	}
-	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: level})))
+	slog.SetDefault(logging.New(os.Stdout, level, env("SERVICE_NAME", "taskboard")))
 	if len(os.Args) > 1 && os.Args[1] == "healthcheck" {
 		client := &http.Client{Timeout: 4 * time.Second}
 		response, err := client.Get("http://127.0.0.1:" + env("PORT", "8080") + "/readyz")
@@ -71,6 +72,7 @@ func env(key, fallback string) string {
 	return fallback
 }
 func main() {
+	slog.SetDefault(logging.New(os.Stdout, slog.LevelInfo, env("SERVICE_NAME", "taskboard")))
 	if err := run(); err != nil {
 		slog.Error("application_failed", "reason", err.Error())
 		os.Exit(1)

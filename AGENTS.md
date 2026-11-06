@@ -48,3 +48,12 @@
   в TSDB и discovery при изменении числа реплик. Рантайм-метрики не должны зависеть от БД.
 - `make archive-hw04` включает настоящий скринкаст, отчёт, все исходники/манифесты
   и Helm render; рабочие секреты и сгенерированные бинарные артефакты не коммитить.
+
+## Логи (домашняя работа 03)
+
+- Общая JSON-схема в `internal/logging`: timestamp, level, message, service.name.
+  HTTP добавляет request.id, method/path/route/status/duration_ms; тела, query и секреты не логировать.
+- VictoriaLogs и Vector — `deploy/logging`, namespace logging в том же учебном minikube.
+- Vector читает только контейнер taskboard в taskboard-lab; не расширять сбор на другие проекты.
+- Проверять свежую доставку по request.id и 4 LogsQL-запроса; скриншоты должны быть из настоящей vmui.
+- В отчёт и архив включать четыре PNG и Helm render; рабочий kubeconfig/.env и зависимости не коммитить.

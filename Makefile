@@ -57,3 +57,19 @@ monitoring-render:
 	bash scripts/monitoring.sh render
 archive-hw04:
 	python3 scripts/package_hw04.py
+
+.PHONY: logging-install logging-status logging-forward logging-validate logging-render logging-check archive-hw03
+logging-install:
+	bash scripts/logging.sh install
+logging-status:
+	bash scripts/logging.sh status
+logging-forward:
+	bash scripts/logging.sh forward
+logging-validate:
+	bash scripts/logging.sh validate
+logging-render:
+	bash scripts/logging.sh render
+logging-check:
+	python3 scripts/check_logs.py --generate
+archive-hw03:
+	python3 scripts/package_hw03.py

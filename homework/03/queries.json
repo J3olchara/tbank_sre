@@ -1,0 +1,22 @@
+[
+  {
+    "id": "01-raw",
+    "title": "Сырые события за последние 30 минут",
+    "query": "_time:30m service.name:taskboard | sort by (_time desc) | limit 30"
+  },
+  {
+    "id": "02-field-filter",
+    "title": "Ошибки клиента: фильтр level:warn",
+    "query": "_time:30m service.name:taskboard level:warn | sort by (_time desc) | limit 30"
+  },
+  {
+    "id": "03-grouped-count",
+    "title": "Число событий по сервису и уровню",
+    "query": "_time:30m service.name:taskboard | stats by (service.name, level) count() as logs_total"
+  },
+  {
+    "id": "04-aggregates",
+    "title": "p95 длительности HTTP и число уникальных путей",
+    "query": "_time:30m service.name:taskboard _msg:http_request duration_ms:* | stats quantile(0.95, duration_ms) as p95_ms, count_uniq(path) as unique_paths"
+  }
+]

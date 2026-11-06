@@ -53,3 +53,15 @@ make monitoring-forward  # TSDB: localhost:8428
 [сценарий скринкаста](homework/04/Сценарий.md). Метрики Go и пять бизнес-counters
 на внутреннем порту 9090, PostgreSQL exporter на 9187, Kubernetes service discovery.
 Архив: `make monitoring-render`, запись видео, `make archive-hw04`.
+
+## Домашняя работа 03 — логи и VictoriaLogs
+
+```sh
+make k8s-build k8s-deploy
+make k8s-scale REPLICAS=3
+make logging-install
+make logging-forward  # UI: http://127.0.0.1:9428/select/vmui/
+```
+
+[Инструкция](homework/03/README.md), [отчёт с четырьмя скриншотами vmui](homework/03/Отчёт.md).
+JSON stdout → Vector DaemonSet → VictoriaLogs; архив для сдачи: `make archive-hw03`.
