@@ -57,6 +57,7 @@ jobs:
       - name: Install minikube and kubectl (verified checksums)
         run: |
           bash scripts/install_k8s_tools.sh
+          bash scripts/install_helm.sh
           echo "$PWD/.tools/bin" >> "$GITHUB_PATH"
       - run: make k8s-start k8s-build k8s-deploy k8s-validate
       - run: make k8s-scale REPLICAS=3
@@ -71,9 +72,35 @@ jobs:
             sleep 1
           done
           TASKBOARD_URL=http://127.0.0.1:18080 make integration
+      - name: Exact business counter semantics on one pod
+        run: |
+          kubectl --context tbank-sre-hw02 -n taskboard-lab port-forward deployment/taskboard 18081:8080 19090:9090 > /tmp/metrics-forward.log 2>&1 &
+          forward_pid=$!
+          trap 'kill "$forward_pid" || true' EXIT
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:19090/metrics > /dev/null; then break; fi
+            echo "Waiting for metrics ($attempt/30)"
+            sleep 1
+          done
+          TASKBOARD_URL=http://127.0.0.1:18081 TASKBOARD_METRICS_URL=http://127.0.0.1:19090 make integration
+      - name: Install VictoriaMetrics via Helm
+        run: make monitoring-install
+      - name: Check TSDB and dynamic discovery
+        run: |
+          bash scripts/monitoring.sh forward > /tmp/vm-forward.log 2>&1 &
+          forward_pid=$!
+          trap 'kill "$forward_pid" || true' EXIT
+          make monitoring-check
+          make k8s-scale REPLICAS=4
+          python3 scripts/check_monitoring.py --replicas 4
+          make k8s-scale REPLICAS=3
+          make monitoring-check
+          make monitoring-render
       - if: always()
         run: |
           kubectl --context tbank-sre-hw02 -n taskboard-lab get pods,svc,pvc,job
           kubectl --context tbank-sre-hw02 -n taskboard-lab get events --sort-by=.lastTimestamp
+          kubectl --context tbank-sre-hw02 -n monitoring get pods,svc,pvc
+          kubectl --context tbank-sre-hw02 -n monitoring logs statefulset/vm-single --tail=30
       - if: always()
         run: minikube delete -p tbank-sre-hw02

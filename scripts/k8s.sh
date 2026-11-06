@@ -56,6 +56,7 @@ case "${1:-}" in
     k apply -f "$MANIFESTS/migrate.yaml"
     k wait --for=condition=complete job/taskboard-migrate --timeout=180s
     k apply -f "$MANIFESTS/app.yaml"
+    k rollout restart deployment/taskboard
     k rollout status deployment/taskboard --timeout=180s
     ;;
   status)

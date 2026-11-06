@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -54,29 +53,15 @@ func run() error {
 		defer cancel()
 		return taskboard.Migrate(ctx, db)
 	}
-	handler := taskboard.NewHandler(db, env("STATIC_DIR", "web/dist"))
+	metrics := taskboard.NewMetrics()
+	handler := taskboard.NewHandler(db, env("STATIC_DIR", "web/dist"), metrics)
 	server := &http.Server{Addr: ":" + env("PORT", "8080"), Handler: handler,
 		ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 10 * time.Second, WriteTimeout: 15 * time.Second, IdleTimeout: 60 * time.Second}
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
-	result := make(chan error, 1)
-	go func() { slog.Info("server_start", "address", server.Addr); result <- server.ListenAndServe() }()
-	select {
-	case err := <-result:
-		return err
-	case <-ctx.Done():
-		slog.Info("server_shutdown")
-		shutdown, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-		if err := server.Shutdown(shutdown); err != nil {
-			return err
-		}
-		err := <-result
-		if !errors.Is(err, http.ErrServerClosed) {
-			return err
-		}
-		return nil
-	}
+	metricsServer := &http.Server{Addr: env("METRICS_ADDR", "127.0.0.1:9090"), Handler: metrics.Handler(),
+		ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 10 * time.Second, WriteTimeout: 10 * time.Second, IdleTimeout: 30 * time.Second}
+	return serve(ctx, server, metricsServer)
 }
 
 func env(key, fallback string) string {

@@ -39,3 +39,17 @@ make archive-hw02  # после записи artifacts/homework-02-demo.mp4
 [Полная инструкция](homework/02/README.md), [отчёт](homework/02/Отчёт.md),
 [сценарий записи](homework/02/Сценарий.md). По умолчанию используется отдельный
 профиль `tbank-sre-hw02`; все обращения kubectl явно указывают его context.
+
+## Домашняя работа 04 — метрики и VictoriaMetrics
+
+```sh
+make k8s-build k8s-deploy
+make k8s-scale REPLICAS=3
+make monitoring-install
+make monitoring-forward  # TSDB: localhost:8428
+```
+
+[Инструкция](homework/04/README.md), [отчёт](homework/04/Отчёт.md),
+[сценарий скринкаста](homework/04/Сценарий.md). Метрики Go и пять бизнес-counters
+на внутреннем порту 9090, PostgreSQL exporter на 9187, Kubernetes service discovery.
+Архив: `make monitoring-render`, запись видео, `make archive-hw04`.

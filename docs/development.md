@@ -1,16 +1,16 @@
 # Trunk-based development
 
-Один trunk и короткие ветки: `trunk → codex/задача → PR → squash → trunk`.
+Один trunk и короткие ветки: `trunk → feat/задача → PR → squash → trunk`.
 Не держим отдельную ветку на весь курс или каждую домашку: приложение эволюционирует
 в `services/taskboard`, материалы заданий остаются в `homework/NN`.
 
-Текущая основная ветка GitHub — `master`. Рабочая ветка первого задания —
-`codex/hw01-taskboard`. Можно оставить имя `master`: trunk-based development не
+Текущая основная ветка GitHub — `master`. Для задач используем префиксы
+`feat/` и `fix/`. Можно оставить имя `master`: trunk-based development не
 зависит от имени ветки. Если переименовывать в `main`, сначала изменить default
 branch в GitHub, затем обновить локальные checkout и правила защиты.
 
 1. Обновить trunk: `git switch master && git pull --ff-only`.
-2. Создать ветку: `git switch -c codex/краткое-название`.
+2. Создать ветку: `git switch -c feat/краткое-название`.
 3. Сделать небольшой законченный срез; запустить `make check`, `make up`, `make integration`.
 4. Открыть PR к trunk. Проверки `checks` и `integration` должны быть зелёными.
 5. Squash merge. После сдачи отметить trunk тегом `hw01-v1`, не менять содержимое тега.
