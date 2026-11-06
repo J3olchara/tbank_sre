@@ -1,0 +1,55 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vector-taskboard
+  namespace: logging
+data:
+  vector.yaml: |
+    data_dir: /var/lib/vector
+    sources:
+      application:
+        type: kubernetes_logs
+        self_node_name: ${VECTOR_SELF_NODE_NAME}
+        extra_label_selector: app=taskboard
+        extra_field_selector: metadata.namespace=taskboard-lab
+        include_paths_glob_patterns:
+          - /var/log/pods/taskboard-lab_*/taskboard/*.log
+        glob_minimum_cooldown_ms: 1000
+        read_from: beginning
+        ignore_older_secs: 600
+    transforms:
+      parse_application_json:
+        type: remap
+        inputs: [application]
+        drop_on_error: true
+        drop_on_abort: true
+        source: |
+          metadata = .kubernetes
+          parsed, err = parse_json(.message)
+          if err != null { abort }
+          . = object!(parsed)
+          .timestamp = parse_timestamp!(string!(.timestamp), format: "%+")
+          ."kubernetes.namespace" = metadata.pod_namespace
+          ."kubernetes.pod" = metadata.pod_name
+          ."kubernetes.container" = metadata.container_name
+          ."kubernetes.node" = metadata.pod_node_name
+    sinks:
+      victorialogs:
+        type: elasticsearch
+        inputs: [parse_application_json]
+        endpoints: [http://victorialogs.logging.svc.cluster.local:9428/insert/elasticsearch/]
+        api_version: v8
+        mode: bulk
+        compression: gzip
+        healthcheck:
+          enabled: false
+        query:
+          _time_field: timestamp
+          _msg_field: message
+          _stream_fields: service.name,kubernetes.namespace,kubernetes.pod,kubernetes.container
+        batch:
+          timeout_secs: 1
+        buffer:
+          type: disk
+          max_size: 268435488
+          when_full: block
