@@ -66,3 +66,18 @@
 - Учебные отказы только через env DEMO_*, по умолчанию выключены; после демонстрации вернуть healthy.
 - `make archive-hw05` требует настоящую запись графиков и проверенные фазы healthy/slow/errors/recovery.
 - Нагрузку запускать отдельным временным Job; не менять чужие данные и кластеры.
+
+## Grafana (домашняя работа 06)
+
+- Helm values и исходные JSON — `deploy/grafana`, экспорт из работающей Grafana —
+  `homework/06/dashboards`; команды `make grafana-*`, namespace monitoring.
+- Data source VictoriaMetrics имеет UID `victoriametrics`; запросы выполняются
+  сервером Grafana через Service, не напрямую браузером к экспортерам.
+- Формулы SLI брать из `scripts/slo_queries.py`; demo 1m и формальный SLA 30d
+  показывать отдельно. При недостатке истории не подменять результат на 100%.
+- PostgreSQL dashboard 9628 импортируется из сохранённого JSON; сохранить
+  оригинал, checksum и описание адаптации к текущему exporter/PostgreSQL.
+- Проверять настоящие запросы через Grafana, скриншоты и видео с интерфейсом.
+  `make archive-hw06` включает экспорт JSON, отчёт и настоящий скринкаст.
+- Пароль администратора только в Secret/локальном .env, доступ снаружи — loopback
+  port-forward. После записи вернуть healthy и удалить временный нагрузочный Job.

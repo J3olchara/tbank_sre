@@ -5,7 +5,7 @@
 ```sh
 make up              # сборка образа, PostgreSQL, миграции, приложение
 make integration     # проверка CRUD на работающем приложении
-make check           # форматирование, vet, race-тесты, сборка React (Go + Node)
+make check           # fmt, vet, race, React, JSON Grafana (Go + Node + Python 3)
 make archive         # artifacts/homework-01.zip для сдачи
 make down            # остановить, сохранив данные PostgreSQL
 ```
@@ -84,3 +84,17 @@ make monitoring-forward  # vmui: http://127.0.0.1:8428/vmui/
 Режимы `make slo-mode MODE=slow|errors|healthy` демонстрируют деградацию и восстановление.
 После демонстрации вернуть healthy и выполнить `make slo-load-stop`.
 Для сдачи: `make slo-render`, `python3 scripts/record_hw05.py`, `make archive-hw05`.
+
+## Домашняя работа 06 — Grafana
+
+```sh
+make grafana-install grafana-validate grafana-render
+make grafana-forward                  # http://127.0.0.1:3000
+# в другом терминале
+make grafana-import-postgres grafana-export
+```
+
+[Инструкция](homework/06/README.md), [отчёт со скриншотами](homework/06/Отчёт.md).
+Дашборд Taskboard: RED, Go runtime, бизнес-метрики и отдельная группа SLA пробера.
+PostgreSQL: импортированный dashboard №9628. Источник — VictoriaMetrics.
+Для сдачи: `make grafana-record grafana-render archive-hw06`.

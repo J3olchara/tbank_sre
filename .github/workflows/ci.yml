@@ -47,7 +47,7 @@ jobs:
 
   kubernetes:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
@@ -133,6 +133,25 @@ jobs:
         with:
           name: homework-05-verification
           path: artifacts/hw05/
+      - name: Install Grafana and validate manifests
+        run: make grafana-install grafana-validate grafana-render
+      - name: Import PostgreSQL dashboard and check real Grafana queries
+        run: |
+          bash scripts/grafana.sh forward > /tmp/grafana-forward.log 2>&1 &
+          forward_pid=$!
+          trap 'make slo-load-stop; kill "$forward_pid" || true' EXIT
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:3000/api/health; then break; fi
+            sleep 1
+          done
+          make slo-load-start
+          sleep 25
+          make grafana-import-postgres grafana-check grafana-export
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: homework-06-verification
+          path: artifacts/hw06/
       - if: always()
         run: |
           kubectl --context tbank-sre-hw02 -n taskboard-lab get pods,svc,pvc,job

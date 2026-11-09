@@ -8,7 +8,7 @@ update:
 check:
 	cd $(APP) && test -z "$$(gofmt -l cmd internal integration)"
 	cd $(APP) && GOCACHE=$(GO_CACHE) go vet ./...
-	$(MAKE) test frontend
+	$(MAKE) test frontend grafana-json-check
 test:
 	cd $(APP) && GOCACHE=$(GO_CACHE) go test -race ./...
 frontend:
@@ -93,3 +93,27 @@ slo-check:
 	python3 scripts/check_slo.py
 archive-hw05:
 	python3 scripts/package_hw05.py
+
+.PHONY: grafana-install grafana-status grafana-forward grafana-validate grafana-render grafana-import-postgres grafana-check grafana-export grafana-json-check grafana-record archive-hw06
+grafana-install:
+	bash scripts/grafana.sh install
+grafana-status:
+	bash scripts/grafana.sh status
+grafana-forward:
+	bash scripts/grafana.sh forward
+grafana-validate:
+	bash scripts/grafana.sh validate
+grafana-render:
+	bash scripts/grafana.sh render
+grafana-import-postgres:
+	bash scripts/grafana.sh import-postgres
+grafana-check:
+	bash scripts/grafana.sh check
+grafana-export:
+	bash scripts/grafana.sh export
+grafana-json-check:
+	python3 scripts/grafana_api.py validate
+grafana-record:
+	python3 scripts/record_hw06.py
+archive-hw06:
+	python3 scripts/package_hw06.py
