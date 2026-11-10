@@ -32,7 +32,8 @@ case "${1:-}" in
       errors) delay=0s; failure=1 ;;
       *) echo "Usage: $0 mode {healthy|slow|errors}" >&2; exit 1 ;;
     esac
-    k set env deployment/taskboard "DEMO_LATENCY=$delay" "DEMO_FAILURE_EVERY=$failure"
+    k set env deployment/taskboard "DEMO_LATENCY=$delay" "DEMO_FAILURE_EVERY=$failure" \
+      DEMO_GOROUTINES=0 DEMO_HEAP_MIB=0
     k rollout status deployment/taskboard --timeout=180s
     ;;
   load-start)

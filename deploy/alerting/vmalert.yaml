@@ -1,0 +1,77 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: vmalert
+  namespace: monitoring
+spec:
+  selector:
+    app: taskboard-vmalert
+  ports:
+    - name: http
+      port: 8880
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vmalert
+  namespace: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: taskboard-vmalert
+  template:
+    metadata:
+      labels:
+        app: taskboard-vmalert
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: vmalert
+          image: victoriametrics/vmalert:v1.154.0
+          args:
+            - -rule=/etc/alerts/rules.yaml
+            - -datasource.url=http://vm-single.monitoring.svc.cluster.local:8428
+            - -notifier.url=http://alertmanager.monitoring.svc.cluster.local:9093
+            - -remoteWrite.url=http://vm-single.monitoring.svc.cluster.local:8428
+            - -remoteRead.url=http://vm-single.monitoring.svc.cluster.local:8428
+            - -rule.evalDelay=1s
+            - -rule.resendDelay=10s
+            - -evaluationInterval=5s
+            - -httpListenAddr=:8880
+            - -external.url=http://127.0.0.1:18880
+            - -loggerFormat=json
+          ports:
+            - name: http
+              containerPort: 8880
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 5
+          volumeMounts:
+            - name: rules
+              mountPath: /etc/alerts
+              readOnly: true
+      volumes:
+        - name: rules
+          configMap:
+            name: taskboard-alert-rules

@@ -94,6 +94,26 @@ slo-check:
 archive-hw05:
 	python3 scripts/package_hw05.py
 
+.PHONY: alerting-install alerting-validate alerting-test alerting-render alerting-mode alerting-forward alerting-status alerting-check archive-hw06
+alerting-install:
+	bash scripts/alerting.sh install
+alerting-validate:
+	bash scripts/alerting.sh validate
+alerting-test:
+	bash scripts/alerting.sh test
+alerting-render:
+	bash scripts/alerting.sh render
+alerting-mode:
+	bash scripts/alerting.sh mode $(or $(MODE),healthy)
+alerting-forward:
+	bash scripts/alerting.sh forward
+alerting-status:
+	bash scripts/alerting.sh status
+alerting-check:
+	python3 scripts/check_alerting.py
+archive-hw06:
+	python3 scripts/package_hw06.py
+
 .PHONY: grafana-install grafana-status grafana-forward grafana-validate grafana-render grafana-import-postgres grafana-check grafana-export grafana-json-check grafana-record archive-hw07
 grafana-install:
 	bash scripts/grafana.sh install
