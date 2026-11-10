@@ -47,7 +47,7 @@ jobs:
 
   kubernetes:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
@@ -113,6 +113,26 @@ jobs:
           make logging-check
           kubectl --context tbank-sre-hw02 -n taskboard-lab logs -l app=taskboard --tail=5 > /tmp/app-stdout.jsonl
           python3 -c 'import json; rows=[json.loads(line) for line in open("/tmp/app-stdout.jsonl") if line.strip()]; assert rows and all(all(k in r for k in ("timestamp","level","message","service.name")) for r in rows)'
+      - name: Install SLO prober and generate real traffic
+        run: make slo-install slo-validate slo-render slo-load-start
+      - name: Check SLI degradation and recovery
+        run: |
+          bash scripts/monitoring.sh forward > /tmp/slo-forward.log 2>&1 &
+          forward_pid=$!
+          trap 'make slo-mode MODE=healthy; make slo-load-stop; kill "$forward_pid" || true' EXIT
+          python3 scripts/check_slo.py --phase healthy --timeout 150
+          python3 scripts/check_slo.py --monthly
+          make slo-mode MODE=slow
+          python3 scripts/check_slo.py --phase slow
+          make slo-mode MODE=errors
+          python3 scripts/check_slo.py --phase errors
+          make slo-mode MODE=healthy
+          python3 scripts/check_slo.py --phase recovery --timeout 180
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: homework-05-verification
+          path: artifacts/hw05/
       - if: always()
         run: |
           kubectl --context tbank-sre-hw02 -n taskboard-lab get pods,svc,pvc,job

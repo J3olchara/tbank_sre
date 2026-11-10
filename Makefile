@@ -73,3 +73,23 @@ logging-check:
 	python3 scripts/check_logs.py --generate
 archive-hw03:
 	python3 scripts/package_hw03.py
+
+.PHONY: slo-install slo-render slo-validate slo-mode slo-load-start slo-load-stop slo-status slo-check archive-hw05
+slo-install:
+	bash scripts/slo.sh install
+slo-render:
+	bash scripts/slo.sh render
+slo-validate:
+	bash scripts/slo.sh validate
+slo-mode:
+	bash scripts/slo.sh mode $(or $(MODE),healthy)
+slo-load-start:
+	bash scripts/slo.sh load-start
+slo-load-stop:
+	bash scripts/slo.sh load-stop
+slo-status:
+	bash scripts/slo.sh status
+slo-check:
+	python3 scripts/check_slo.py
+archive-hw05:
+	python3 scripts/package_hw05.py
