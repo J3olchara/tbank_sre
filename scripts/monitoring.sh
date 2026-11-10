@@ -25,7 +25,7 @@ case "${1:-}" in
     k get pods,svc,pvc
     ;;
   forward)
-    k port-forward service/vm-single "${VM_PORT:-8428}:8428" --address=127.0.0.1
+    exec kubectl --context "$PROFILE" -n monitoring port-forward service/vm-single "${VM_PORT:-8428}:8428" --address=127.0.0.1
     ;;
   render)
     mkdir -p artifacts/hw04

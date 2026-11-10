@@ -1,0 +1,69 @@
+groups:
+  - name: taskboard-service
+    interval: 5s
+    rules:
+      - alert: TaskboardHighErrorRate
+        expr: >-
+          (100 * sum(increase(taskboard_http_requests_total{job="taskboard",namespace="taskboard-lab",route=~"(GET|POST|PUT|DELETE) /api/tasks.*",code=~"5.."}[1m]))
+          / sum(increase(taskboard_http_requests_total{job="taskboard",namespace="taskboard-lab",route=~"(GET|POST|PUT|DELETE) /api/tasks.*"}[1m])) > 5)
+          and on() (sum(increase(taskboard_http_requests_total{job="taskboard",namespace="taskboard-lab",route=~"(GET|POST|PUT|DELETE) /api/tasks.*"}[1m])) >= 10)
+        for: 30s
+        labels:
+          service: taskboard
+          namespace: taskboard-lab
+          component: api
+          severity: critical
+        annotations:
+          summary: API 5xx rate exceeds 5%
+          description: More than 5% of task API responses are 5xx for 30s; window 1m, at least 10 requests.
+      - alert: TaskboardHighLatency
+        expr: >-
+          (100 * sum(increase(taskboard_http_request_duration_seconds_bucket{job="taskboard",namespace="taskboard-lab",route=~"(GET|POST|PUT|DELETE) /api/tasks.*",le="0.25"}[1m]))
+          / sum(increase(taskboard_http_request_duration_seconds_count{job="taskboard",namespace="taskboard-lab",route=~"(GET|POST|PUT|DELETE) /api/tasks.*"}[1m])) < 90)
+          and on() (sum(increase(taskboard_http_request_duration_seconds_count{job="taskboard",namespace="taskboard-lab",route=~"(GET|POST|PUT|DELETE) /api/tasks.*"}[1m])) >= 10)
+        for: 30s
+        labels:
+          service: taskboard
+          namespace: taskboard-lab
+          component: api
+          severity: warning
+        annotations:
+          summary: More than 10% of API responses exceed 250ms
+          description: Fewer than 90% of task API responses finish within 250ms for 30s; window 1m, at least 10 requests.
+      - alert: TaskboardProbeFailed
+        expr: >-
+          ((min(taskboard_probe_success{job="taskboard-prober",namespace="taskboard-lab"}) or vector(0))
+          * (min(up{job="taskboard-prober",namespace="taskboard-lab"}) or vector(0))
+          * ((time() - (max(taskboard_probe_last_run_timestamp_seconds{job="taskboard-prober",namespace="taskboard-lab"}) or vector(0))) < bool 12)) < 1
+        for: 20s
+        labels:
+          service: taskboard
+          namespace: taskboard-lab
+          component: prober
+          severity: critical
+        annotations:
+          summary: UI and task API probe is unavailable
+          description: The UI/API check is unsuccessful, its exporter is missing or its result is older than 12s, for 20s.
+  - name: taskboard-runtime
+    interval: 5s
+    rules:
+      - alert: TaskboardGoroutinesHigh
+        expr: go_goroutines{job="taskboard",namespace="taskboard-lab"} > 200
+        for: 30s
+        labels:
+          service: taskboard
+          component: go
+          severity: warning
+        annotations:
+          summary: Go goroutines exceed 200
+          description: Goroutine count stays above 200 for 30s; investigate blocked requests or goroutine leaks.
+      - alert: TaskboardGoHeapHigh
+        expr: go_memstats_heap_alloc_bytes{job="taskboard",namespace="taskboard-lab"} > 33554432
+        for: 30s
+        labels:
+          service: taskboard
+          component: go
+          severity: warning
+        annotations:
+          summary: Live Go heap exceeds 32 MiB
+          description: Live Go heap stays above 32 MiB for 30s; lab container memory limit is 128 MiB.
