@@ -54,10 +54,12 @@ case "${1:-}" in
     ;;
   forward)
     children=()
-    trap 'kill "${children[@]}" 2>/dev/null || true' EXIT
-    k port-forward service/vmalert "${VMALERT_PORT:-18880}:8880" --address=127.0.0.1 & children+=("$!")
-    k port-forward service/alertmanager "${ALERTMANAGER_PORT:-19093}:9093" --address=127.0.0.1 & children+=("$!")
-    k port-forward service/alert-inbox "${ALERT_INBOX_PORT:-18085}:8085" --address=127.0.0.1 & children+=("$!")
+    trap 'kill "${children[@]}" 2>/dev/null || true; wait "${children[@]}" 2>/dev/null || true' EXIT
+    trap 'exit 130' INT
+    trap 'exit 143' TERM
+    kubectl --context "$PROFILE" -n monitoring port-forward service/vmalert "${VMALERT_PORT:-18880}:8880" --address=127.0.0.1 & children+=("$!")
+    kubectl --context "$PROFILE" -n monitoring port-forward service/alertmanager "${ALERTMANAGER_PORT:-19093}:9093" --address=127.0.0.1 & children+=("$!")
+    kubectl --context "$PROFILE" -n monitoring port-forward service/alert-inbox "${ALERT_INBOX_PORT:-18085}:8085" --address=127.0.0.1 & children+=("$!")
     wait -n
     ;;
   status)

@@ -56,7 +56,7 @@ case "${1:-}" in
     helm list --kube-context "$PROFILE" -n monitoring
     k get pods,svc,pvc
     ;;
-  forward) k port-forward svc/grafana "${GRAFANA_PORT:-3000}:80" --address=127.0.0.1 ;;
+  forward) exec kubectl --context "$PROFILE" -n monitoring port-forward svc/grafana "${GRAFANA_PORT:-3000}:80" --address=127.0.0.1 ;;
   import-postgres|check|export) python3 scripts/grafana_api.py "$1" ;;
   *) echo "Usage: $0 {install|render|validate|status|forward|import-postgres|check|export}" >&2; exit 1 ;;
 esac

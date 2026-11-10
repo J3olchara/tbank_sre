@@ -169,14 +169,20 @@ jobs:
         with:
           name: homework-07-verification
           path: artifacts/hw07/
+      - name: Port-forward diagnostics
+        if: always()
+        run: |
+          shopt -s nullglob
+          logs=(/tmp/*forward.log)
+          if ((${#logs[@]})); then tail -n 15 "${logs[@]}"; fi
       - if: always()
         run: |
           kubectl --context tbank-sre-hw02 -n taskboard-lab get pods,svc,pvc,job
           kubectl --context tbank-sre-hw02 -n taskboard-lab get events --sort-by=.lastTimestamp
           kubectl --context tbank-sre-hw02 -n monitoring get pods,svc,pvc
           kubectl --context tbank-sre-hw02 -n monitoring logs statefulset/vm-single --tail=30
-          kubectl --context tbank-sre-hw02 -n monitoring logs deployment/vmalert --tail=30
-          kubectl --context tbank-sre-hw02 -n monitoring logs deployment/alertmanager --tail=30
+          kubectl --context tbank-sre-hw02 -n monitoring logs deployment/vmalert --tail=30 || true
+          kubectl --context tbank-sre-hw02 -n monitoring logs deployment/alertmanager --tail=30 || true
           kubectl --context tbank-sre-hw02 -n logging get pods,daemonset,svc,pvc
           kubectl --context tbank-sre-hw02 -n logging logs daemonset/vector-taskboard --tail=30
       - if: always()
