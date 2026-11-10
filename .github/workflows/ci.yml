@@ -24,6 +24,7 @@ jobs:
           cache: npm
           cache-dependency-path: services/taskboard/web/package-lock.json
       - run: make check
+      - run: make alerting-test
       - run: make archive
       - uses: actions/upload-artifact@v4
         with:
@@ -47,7 +48,7 @@ jobs:
 
   kubernetes:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
@@ -133,12 +134,29 @@ jobs:
         with:
           name: homework-05-verification
           path: artifacts/hw05/
+      - name: Install and validate vmalert and Alertmanager
+        run: make alerting-install alerting-validate alerting-render
+      - name: Verify real alert firing, webhook delivery and recovery
+        run: |
+          bash scripts/alerting.sh forward > /tmp/alerting-forward.log 2>&1 &
+          alerting_pid=$!
+          bash scripts/monitoring.sh forward > /tmp/alerting-vm-forward.log 2>&1 &
+          vm_pid=$!
+          trap 'kill "$alerting_pid" "$vm_pid" || true' EXIT
+          make alerting-check
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: homework-06-verification
+          path: artifacts/hw06/
       - if: always()
         run: |
           kubectl --context tbank-sre-hw02 -n taskboard-lab get pods,svc,pvc,job
           kubectl --context tbank-sre-hw02 -n taskboard-lab get events --sort-by=.lastTimestamp
           kubectl --context tbank-sre-hw02 -n monitoring get pods,svc,pvc
           kubectl --context tbank-sre-hw02 -n monitoring logs statefulset/vm-single --tail=30
+          kubectl --context tbank-sre-hw02 -n monitoring logs deployment/vmalert --tail=30
+          kubectl --context tbank-sre-hw02 -n monitoring logs deployment/alertmanager --tail=30
           kubectl --context tbank-sre-hw02 -n logging get pods,daemonset,svc,pvc
           kubectl --context tbank-sre-hw02 -n logging logs daemonset/vector-taskboard --tail=30
       - if: always()
