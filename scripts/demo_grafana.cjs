@@ -7,11 +7,11 @@ const root = path.resolve(__dirname, '..');
 const base = process.env.GRAFANA_URL || 'http://127.0.0.1:3000';
 const state = process.env.RECORDING_STATE_DIR;
 const evidence = {events:[], responses:[]};
-const screenshots = path.join(root,'homework/06/screenshots');
+const screenshots = path.join(root,'homework/07/screenshots');
 const pause = ms => new Promise(resolve => setTimeout(resolve,ms));
 let sequence = 0;
 function save() {
-  fs.writeFileSync(path.join(root,'artifacts/hw06/grafana-recording.json'),JSON.stringify(evidence,null,2));
+  fs.writeFileSync(path.join(root,'artifacts/hw07/grafana-recording.json'),JSON.stringify(evidence,null,2));
 }
 function mark(event, details={}) {
   evidence.events.push({event,timestamp:Date.now()/1000,...details}); save(); console.log(event);
@@ -22,7 +22,7 @@ function raise(pattern) {
   execFileSync('xdotool',['windowfocus',ids[ids.length-1]]);
 }
 async function command(action) {
-  mark('command: '+action); raise('HW06 Control');
+  mark('command: '+action); raise('HW07 Control');
   fs.writeFileSync(path.join(state,'command.tmp'),JSON.stringify({sequence:++sequence,action}));
   fs.renameSync(path.join(state,'command.tmp'),path.join(state,'command.json'));
   const deadline=Date.now()+180000;
@@ -43,7 +43,7 @@ async function command(action) {
 function phase(name) {
   execFileSync('python3',['scripts/check_slo.py','--phase',name,'--timeout','30'],{cwd:root,stdio:'pipe',timeout:40000});
   const sample=JSON.parse(fs.readFileSync(path.join(root,'artifacts/hw05',name+'.json')));
-  fs.writeFileSync(path.join(root,'artifacts/hw06','phase-'+name+'.json'),JSON.stringify(sample,null,2));
+  fs.writeFileSync(path.join(root,'artifacts/hw07','phase-'+name+'.json'),JSON.stringify(sample,null,2));
   mark('verified: '+name,{values:sample.values});
 }
 (async()=>{
@@ -136,8 +136,8 @@ function phase(name) {
     if (!evidence.responses.length) throw new Error('No real Grafana responses');
     mark('complete');
   } catch (error) {
-    await page.screenshot({path:path.join(root,'artifacts/hw06/browser-error.png')}).catch(()=>{});
-    fs.writeFileSync(path.join(root,'artifacts/hw06/browser-error.txt'),await page.locator('body').innerText().catch(()=>''));
+    await page.screenshot({path:path.join(root,'artifacts/hw07/browser-error.png')}).catch(()=>{});
+    fs.writeFileSync(path.join(root,'artifacts/hw07/browser-error.txt'),await page.locator('body').innerText().catch(()=>''));
     throw error;
   } finally {
     await browser.close();

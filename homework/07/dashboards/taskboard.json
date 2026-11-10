@@ -2,7 +2,7 @@
   "annotations": {
     "list": []
   },
-  "description": "ДЗ №6: RED, Go runtime, бизнес-метрики и отдельный SLA пробера. Demo 1m отделён от целевого окна 30d.",
+  "description": "ДЗ №7: RED, Go runtime, бизнес-метрики и отдельный SLA пробера. Demo 1m отделён от целевого окна 30d.",
   "editable": true,
   "id": null,
   "links": [
@@ -1888,7 +1888,7 @@
   "schemaVersion": 39,
   "tags": [
     "tbank-sre",
-    "hw06"
+    "hw07"
   ],
   "templating": {
     "list": []
@@ -1908,5 +1908,5 @@
   "timezone": "browser",
   "title": "Taskboard · приложение и SLA",
   "uid": "taskboard-overview",
-  "version": 2
+  "version": 3
 }

@@ -1,7 +1,7 @@
-# Домашняя работа 06 — Grafana
+# Домашняя работа 07 — Grafana
 
 Taskboard, SLA пробера и импортированный PostgreSQL Exporter dashboard №9628.
-Для сдачи: `artifacts/homework-06.zip` с экспортом JSON, отчётом и видео.
+Для сдачи: `artifacts/homework-07.zip` с экспортом JSON, отчётом и видео.
 
 ## Запуск
 
@@ -22,7 +22,7 @@ make grafana-forward                 # отдельный терминал, loca
 ```
 
 Логин `admin`. Пароль хранится в Secret `grafana-admin` и первоначально
-генерируется в игнорируемом `homework/06/.env`. Посмотреть локально:
+генерируется в игнорируемом `homework/07/.env`. Посмотреть локально:
 
 ```sh
 kubectl --context tbank-sre-hw02 -n monitoring get secret grafana-admin \
@@ -58,7 +58,7 @@ UID `victoriametrics`, URL внутри кластера `http://vm-single.monit
 Исходный dashboard приложения генерируется `python3 scripts/grafana_dashboards.py`
 с использованием формул ДЗ №5. `make grafana-json-check` проверяет актуальность JSON.
 После изменения источника повторить `make grafana-install grafana-export`.
-Экспорт для сдачи находится в `homework/06/dashboards`, а не подменяется файлом генератора.
+Экспорт для сдачи находится в `homework/07/dashboards`, а не подменяется файлом генератора.
 
 ## Показ деградации
 
@@ -79,13 +79,13 @@ make slo-load-stop
 Для повторения нужны Xvfb, xterm, xdotool, ffmpeg/ffprobe и Playwright Chromium:
 
 ```sh
-npm install --prefix .tools/hw06-browser playwright@1.65.0 --no-audit --no-fund
-PLAYWRIGHT_BROWSERS_PATH="$PWD/.tools/hw06-browser/browsers" \
-  .tools/hw06-browser/node_modules/.bin/playwright install --with-deps chromium
-export NODE_PATH="$PWD/.tools/hw06-browser/node_modules"
-export PLAYWRIGHT_BROWSERS_PATH="$PWD/.tools/hw06-browser/browsers"
+npm install --prefix .tools/hw07-browser playwright@1.65.0 --no-audit --no-fund
+PLAYWRIGHT_BROWSERS_PATH="$PWD/.tools/hw07-browser/browsers" \
+  .tools/hw07-browser/node_modules/.bin/playwright install --with-deps chromium
+export NODE_PATH="$PWD/.tools/hw07-browser/node_modules"
+export PLAYWRIGHT_BROWSERS_PATH="$PWD/.tools/hw07-browser/browsers"
 make grafana-record
-make grafana-render archive-hw06
+make grafana-render archive-hw07
 ```
 
 Запись настоящего X11/Chromium без ускорения; отдельные loopback forward

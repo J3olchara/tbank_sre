@@ -6,7 +6,7 @@ PROFILE=${PROFILE:-tbank-sre-hw02}
 CHART_VERSION=14.4.0
 export HELM_REPOSITORY_CONFIG="$ROOT/.tools/helm/repositories.yaml"
 export HELM_REPOSITORY_CACHE="$ROOT/.tools/helm/cache"
-mkdir -p "$HELM_REPOSITORY_CACHE" artifacts/hw06
+mkdir -p "$HELM_REPOSITORY_CACHE" artifacts/hw07
 k() { kubectl --context "$PROFILE" -n monitoring "$@"; }
 configmap() {
   k create configmap grafana-taskboard-dashboard \
@@ -14,14 +14,14 @@ configmap() {
 }
 secret() {
   if k get secret grafana-admin >/dev/null 2>&1; then return; fi
-  if [[ ! -f homework/06/.env ]]; then
+  if [[ ! -f homework/07/.env ]]; then
     umask 077
-    python3 -c 'import secrets; print("GRAFANA_ADMIN_PASSWORD="+secrets.token_hex(24))' > homework/06/.env
+    python3 -c 'import secrets; print("GRAFANA_ADMIN_PASSWORD="+secrets.token_hex(24))' > homework/07/.env
   fi
   python3 - <<'PY' | k apply -f -
 from pathlib import Path
 import re
-value=Path('homework/06/.env').read_text().strip().removeprefix('GRAFANA_ADMIN_PASSWORD=')
+value=Path('homework/07/.env').read_text().strip().removeprefix('GRAFANA_ADMIN_PASSWORD=')
 if not re.fullmatch(r'[a-zA-Z0-9_-]{16,128}',value):
     raise SystemExit('GRAFANA_ADMIN_PASSWORD must be 16-128 URL-safe characters')
 print(Path('deploy/grafana/secret.template.yaml').read_text().replace('${GRAFANA_ADMIN_PASSWORD}',value))
@@ -42,8 +42,8 @@ case "${1:-}" in
       k rollout status deployment/grafana --timeout=180s
     else
       helm template grafana grafana-community/grafana --version "$CHART_VERSION" \
-        --namespace monitoring -f deploy/grafana/values.yaml > artifacts/hw06/grafana-rendered.yaml
-      configmap > artifacts/hw06/dashboard-configmap.yaml
+        --namespace monitoring -f deploy/grafana/values.yaml > artifacts/hw07/grafana-rendered.yaml
+      configmap > artifacts/hw07/dashboard-configmap.yaml
     fi
     ;;
   validate)

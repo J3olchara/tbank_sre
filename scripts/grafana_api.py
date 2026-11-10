@@ -111,14 +111,14 @@ def check(client):
                 evidence['panels'].append({'dashboard':uid,'panel_id':panel['id'],'title':panel['title'],'refId':query['refId'],'expression':expr,'samples':len(values),'last':values[-1] if values else None})
     if client.query('((time() - max(timestamp(up{job="taskboard"}))) < bool 20)',True)!=[1.0]:
         raise RuntimeError('Application samples are stale')
-    output=ROOT/'artifacts/hw06/grafana-check.json'
+    output=ROOT/'artifacts/hw07/grafana-check.json'
     output.parent.mkdir(parents=True,exist_ok=True)
     output.write_text(json.dumps(evidence,ensure_ascii=False,indent=2)+'\n')
     print(f'PASS: datasource health, fresh samples, {len(evidence["panels"])} real Grafana queries')
 
 
 def export(client):
-    directory=ROOT/'homework/06/dashboards'
+    directory=ROOT/'homework/07/dashboards'
     directory.mkdir(parents=True,exist_ok=True)
     for uid,name in [('taskboard-overview','taskboard.json'),('taskboard-postgres','postgres.json')]:
         dashboard=client.request('/api/dashboards/uid/'+uid)['dashboard']

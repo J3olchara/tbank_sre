@@ -9,7 +9,7 @@ import time
 state=Path(os.environ['RECORDING_STATE_DIR'])
 profile=os.environ.get('PROFILE','tbank-sre-hw02')
 last=-1
-print('Домашняя работа 06 · Grafana\nОжидание демонстрации…',flush=True)
+print('Домашняя работа 07 · Grafana\nОжидание демонстрации…',flush=True)
 commands={
     'status':[
         ['helm','list','--kube-context',profile,'-n','monitoring'],

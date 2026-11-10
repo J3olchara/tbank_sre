@@ -13,8 +13,8 @@ os.chdir(root)
 env=dict(os.environ)
 env['GRAFANA_URL']='http://127.0.0.1:13000'
 env['VM_URL']='http://127.0.0.1:18429'
-output=root/'artifacts/homework-06-demo.mp4'
-partial=output.with_name('homework-06-demo.partial.mp4')
+output=root/'artifacts/homework-07-demo.mp4'
+partial=output.with_name('homework-07-demo.partial.mp4')
 processes=[]
 recorder=None
 try:
@@ -38,7 +38,7 @@ try:
     subprocess.run(['python3','scripts/check_slo.py','--phase','healthy','--timeout','150'],env=env,check=True)
     subprocess.run(['python3','scripts/grafana_api.py','import-postgres'],env=env,check=True)
     subprocess.run(['python3','scripts/grafana_api.py','check'],env=env,check=True)
-    with tempfile.TemporaryDirectory(prefix='hw06-recording-') as directory:
+    with tempfile.TemporaryDirectory(prefix='hw07-recording-') as directory:
         env['RECORDING_STATE_DIR']=directory
         env['DISPLAY']=env.get('RECORDING_DISPLAY',':95')
         process=subprocess.Popen(['Xvfb',env['DISPLAY'],'-screen','0','1920x1200x24','-nolisten','tcp'],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
@@ -48,7 +48,7 @@ try:
             raise RuntimeError('Xvfb failed; choose an unused RECORDING_DISPLAY')
         with (Path(directory)/'ffmpeg.log').open('w') as log:
             recorder=subprocess.Popen(['ffmpeg','-y','-f','x11grab','-draw_mouse','1','-framerate','15','-video_size','1920x1200','-i',env['DISPLAY'],'-c:v','libx264','-preset','veryfast','-crf','24','-pix_fmt','yuv420p','-movflags','+faststart',str(partial)],stdout=log,stderr=subprocess.STDOUT)
-            process=subprocess.Popen(['xterm','-u8','-title','HW06 Control','-geometry','145x42+0+0','-fa','DejaVu Sans Mono','-fs','18','-bg','#111827','-fg','#e5e7eb','-e','python3','scripts/demo_grafana_terminal.py'],env=env)
+            process=subprocess.Popen(['xterm','-u8','-title','HW07 Control','-geometry','145x42+0+0','-fa','DejaVu Sans Mono','-fs','18','-bg','#111827','-fg','#e5e7eb','-e','python3','scripts/demo_grafana_terminal.py'],env=env)
             processes.append(process)
             time.sleep(1)
             subprocess.run(['node','scripts/demo_grafana.cjs'],env=env,check=True,timeout=480)

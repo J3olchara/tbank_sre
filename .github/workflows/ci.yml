@@ -150,8 +150,8 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: homework-06-verification
-          path: artifacts/hw06/
+          name: homework-07-verification
+          path: artifacts/hw07/
       - if: always()
         run: |
           kubectl --context tbank-sre-hw02 -n taskboard-lab get pods,svc,pvc,job

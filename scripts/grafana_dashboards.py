@@ -49,7 +49,7 @@ def row(ident, title, y):
 
 def dashboard(uid, title, panels):
     return dict(id=None, uid=uid, title=title, version=1, schemaVersion=39,
-                tags=['tbank-sre','hw06'], timezone='browser', editable=True,
+                tags=['tbank-sre','hw07'], timezone='browser', editable=True,
                 refresh='5s', time={'from':'now-15m','to':'now'},
                 timepicker={'refresh_intervals':['5s','10s','30s','1m']},
                 templating={'list':[]}, annotations={'list':[]}, panels=panels,
@@ -121,7 +121,7 @@ def application():
     panels.append(panel(52,'CPU / память · подсказка','text',(12,39,12,7),description=''))
     panels[-1]['options']={'mode':'markdown','content':'**Источник: VictoriaMetrics** → встроенный Prometheus data source.\n\nRED: RPS, 5xx, длительность. Golden Signals: traffic, errors, latency и признаки saturation.\n\nCPU, RSS, heap и FD относятся к процессу Go, не ко всей ноде. Node exporter и kube-state-metrics в стенд не добавлялись.\n\n**SLA:** целевой период 30d; графики 1m служат для демонстрации. При отсутствии запросов request SLI не определён.'}
     d=dashboard('taskboard-overview','Taskboard · приложение и SLA',panels)
-    d['description']='ДЗ №6: RED, Go runtime, бизнес-метрики и отдельный SLA пробера. Demo 1m отделён от целевого окна 30d.'
+    d['description']='ДЗ №7: RED, Go runtime, бизнес-метрики и отдельный SLA пробера. Demo 1m отделён от целевого окна 30d.'
     d['links']=[{'type':'link','title':'PostgreSQL Exporter · 9628','url':'/d/taskboard-postgres','targetBlank':False}]
     return d
 

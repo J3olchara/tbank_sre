@@ -6,7 +6,7 @@
   "schemaVersion": 39,
   "tags": [
     "tbank-sre",
-    "hw06"
+    "hw07"
   ],
   "timezone": "browser",
   "editable": true,
@@ -1908,5 +1908,5 @@
       "targetBlank": false
     }
   ],
-  "description": "ДЗ №6: RED, Go runtime, бизнес-метрики и отдельный SLA пробера. Demo 1m отделён от целевого окна 30d."
+  "description": "ДЗ №7: RED, Go runtime, бизнес-метрики и отдельный SLA пробера. Demo 1m отделён от целевого окна 30d."
 }
