@@ -13,6 +13,7 @@ import (
 
 	_ "github.com/lib/pq"
 	"tbank-sre/taskboard/internal/logging"
+	"tbank-sre/taskboard/internal/runtimedemo"
 	"tbank-sre/taskboard/internal/taskboard"
 )
 
@@ -67,6 +68,18 @@ func run() error {
 		ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 10 * time.Second, WriteTimeout: 15 * time.Second, IdleTimeout: 60 * time.Second}
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
+	runtimeConfig, err := runtimedemo.Parse(os.Getenv("DEMO_GOROUTINES"), os.Getenv("DEMO_HEAP_MIB"))
+	if err != nil {
+		return err
+	}
+	stopDemo, err := runtimedemo.Start(ctx, runtimeConfig)
+	if err != nil {
+		return err
+	}
+	defer stopDemo()
+	if runtimeConfig.Goroutines > 0 || runtimeConfig.HeapMiB > 0 {
+		slog.Warn("runtime_demo_enabled", "goroutines", runtimeConfig.Goroutines, "heap_mib", runtimeConfig.HeapMiB)
+	}
 	metricsServer := &http.Server{Addr: env("METRICS_ADDR", "127.0.0.1:9090"), Handler: metrics.Handler(),
 		ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 10 * time.Second, WriteTimeout: 10 * time.Second, IdleTimeout: 30 * time.Second}
 	return serve(ctx, server, metricsServer)

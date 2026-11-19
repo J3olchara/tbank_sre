@@ -1,0 +1,15 @@
+global:
+  resolve_timeout: 1m
+route:
+  receiver: taskboard-webhook
+  group_by: [alertname, namespace, service]
+  group_wait: 5s
+  group_interval: 10s
+  repeat_interval: 1h
+receivers:
+  - name: taskboard-webhook
+    webhook_configs:
+      - url: http://alert-inbox.monitoring.svc.cluster.local:8085/webhook
+        send_resolved: true
+        max_alerts: 32
+        timeout: 5s

@@ -23,7 +23,7 @@ case "${1:-}" in
     k get pods,daemonset,svc,pvc
     ;;
   forward)
-    k port-forward service/victorialogs "${VL_PORT:-9428}:9428" --address=127.0.0.1
+    exec kubectl --context "$PROFILE" -n logging port-forward service/victorialogs "${VL_PORT:-9428}:9428" --address=127.0.0.1
     ;;
   validate)
     k apply --dry-run=server -f deploy/logging/vector-config.yaml -f deploy/logging/vector.yaml

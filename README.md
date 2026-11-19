@@ -84,3 +84,16 @@ make monitoring-forward  # vmui: http://127.0.0.1:8428/vmui/
 Режимы `make slo-mode MODE=slow|errors|healthy` демонстрируют деградацию и восстановление.
 После демонстрации вернуть healthy и выполнить `make slo-load-stop`.
 Для сдачи: `make slo-render`, `python3 scripts/record_hw05.py`, `make archive-hw05`.
+
+## Домашняя работа 06 — алерты
+
+```sh
+make k8s-build  # приложение с приёмником уведомлений
+make alerting-test alerting-install alerting-validate alerting-render
+make alerting-forward
+# В других терминалах: make monitoring-forward; make alerting-check
+```
+
+[Инструкция](homework/06/README.md), [отчёт](homework/06/Отчёт.md).
+Три алерта сервиса и два Go-рантайма; vmalert → Alertmanager → webhook с журналом на PVC.
+Архив со скриншотами срабатывания и уведомлениями: `make archive-hw06`.

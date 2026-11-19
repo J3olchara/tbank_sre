@@ -70,7 +70,7 @@ case "${1:-}" in
     k get pods -o wide
     ;;
   forward)
-    k port-forward service/taskboard "${APP_PORT:-18080}:8080" --address=127.0.0.1
+    exec kubectl --context "$PROFILE" -n "$NAMESPACE" port-forward service/taskboard "${APP_PORT:-18080}:8080" --address=127.0.0.1
     ;;
   validate)
     for manifest in namespace configmap postgres migrate app; do

@@ -1,0 +1,584 @@
+# Rule behavior is tested with the real MetricsQL engine (vmalert-tool).
+rule_files:
+- rules.yaml
+evaluation_interval: 5s
+tests:
+- name: 'no traffic and fresh prober: no request alerts'
+  interval: 5s
+  input_series:
+  - series: taskboard_probe_success{job="taskboard-prober",namespace="taskboard-lab"}
+    values: 1x36
+  - series: up{job="taskboard-prober",namespace="taskboard-lab"}
+    values: 1x36
+  - series: taskboard_probe_last_run_timestamp_seconds{job="taskboard-prober",namespace="taskboard-lab"}
+    values: 946684800+5x36
+  alert_rule_test:
+  - eval_time: 1m
+    groupname: taskboard-service
+    alertname: TaskboardHighErrorRate
+    exp_alerts: []
+  - eval_time: 1m
+    groupname: taskboard-service
+    alertname: TaskboardHighLatency
+    exp_alerts: []
+  - eval_time: 1m
+    groupname: taskboard-service
+    alertname: TaskboardProbeFailed
+    exp_alerts: []
+  - eval_time: 1m
+    groupname: taskboard-runtime
+    alertname: TaskboardGoroutinesHigh
+    exp_alerts: []
+  - eval_time: 1m
+    groupname: taskboard-runtime
+    alertname: TaskboardGoHeapHigh
+    exp_alerts: []
+- name: error rate pending then firing
+  interval: 5s
+  input_series:
+  - series: taskboard_probe_success{job="taskboard-prober",namespace="taskboard-lab"}
+    values: 1x36
+  - series: up{job="taskboard-prober",namespace="taskboard-lab"}
+    values: 1x36
+  - series: taskboard_probe_last_run_timestamp_seconds{job="taskboard-prober",namespace="taskboard-lab"}
+    values: 946684800+5x36
+  - series: taskboard_http_requests_total{job="taskboard",namespace="taskboard-lab",route="GET /api/tasks",code="200"}
+    values: 0+9x36
+  - series: taskboard_http_requests_total{job="taskboard",namespace="taskboard-lab",route="GET /api/tasks",code="503"}
+    values: 0+1x36
+  alert_rule_test:
+  - eval_time: 20s
+    groupname: taskboard-service
+    alertname: TaskboardHighErrorRate
+    exp_alerts: []
+  - eval_time: 20s
+    groupname: taskboard-service
+    alertname: TaskboardHighLatency
+    exp_alerts: []
+  - eval_time: 20s
+    groupname: taskboard-service
+    alertname: TaskboardProbeFailed
+    exp_alerts: []
+  - eval_time: 20s
+    groupname: taskboard-runtime
+    alertname: TaskboardGoroutinesHigh
+    exp_alerts: []
+  - eval_time: 20s
+    groupname: taskboard-runtime
+    alertname: TaskboardGoHeapHigh
+    exp_alerts: []
+  - eval_time: 1m
+    groupname: taskboard-service
+    alertname: TaskboardHighErrorRate
+    exp_alerts:
+    - exp_labels:
+        namespace: taskboard-lab
+        service: taskboard
+        component: api
+        severity: critical
+      exp_annotations:
+        summary: API 5xx rate exceeds 5%
+        description: More than 5% of task API responses are 5xx for 30s; window 1m, at least 10 requests.
+  - eval_time: 1m
+    groupname: taskboard-service
+    alertname: TaskboardHighLatency
+    exp_alerts: []
+  - eval_time: 1m
+    groupname: taskboard-service
+    alertname: TaskboardProbeFailed
+    exp_alerts: []
+  - eval_time: 1m
+    groupname: taskboard-runtime
+    alertname: TaskboardGoroutinesHigh
+    exp_alerts: []
+  - eval_time: 1m
+    groupname: taskboard-runtime
+    alertname: TaskboardGoHeapHigh
+    exp_alerts: []
+- name: slow successful requests
+  interval: 5s
+  input_series:
+  - series: taskboard_probe_success{job="taskboard-prober",namespace="taskboard-lab"}
+    values: 1x36
+  - series: up{job="taskboard-prober",namespace="taskboard-lab"}
+    values: 1x36
+  - series: taskboard_probe_last_run_timestamp_seconds{job="taskboard-prober",namespace="taskboard-lab"}
+    values: 946684800+5x36
+  - series: taskboard_http_request_duration_seconds_bucket{job="taskboard",namespace="taskboard-lab",route="GET
+      /api/tasks",le="0.25"}
+    values: 0+8x36
+  - series: taskboard_http_request_duration_seconds_count{job="taskboard",namespace="taskboard-lab",route="GET
+      /api/tasks"}
+    values: 0+10x36
+  alert_rule_test:
+  - eval_time: 20s
+    groupname: taskboard-service
+    alertname: TaskboardHighErrorRate
+    exp_alerts: []
+  - eval_time: 20s
+    groupname: taskboard-service
+    alertname: TaskboardHighLatency
+    exp_alerts: []
+  - eval_time: 20s
+    groupname: taskboard-service
+    alertname: TaskboardProbeFailed
+    exp_alerts: []
+  - eval_time: 20s
+    groupname: taskboard-runtime
+    alertname: TaskboardGoroutinesHigh
+    exp_alerts: []
+  - eval_time: 20s
+    groupname: taskboard-runtime
+    alertname: TaskboardGoHeapHigh
+    exp_alerts: []
+  - eval_time: 1m
+    groupname: taskboard-service
+    alertname: TaskboardHighErrorRate
+    exp_alerts: []
+  - eval_time: 1m
+    groupname: taskboard-service
+    alertname: TaskboardHighLatency
+    exp_alerts:
+    - exp_labels:
+        namespace: taskboard-lab
+        service: taskboard
+        component: api
+        severity: warning
+      exp_annotations:
+        summary: More than 10% of API responses exceed 250ms
+        description: Fewer than 90% of task API responses finish within 250ms for 30s; window 1m, at least
+          10 requests.
+  - eval_time: 1m
+    groupname: taskboard-service
+    alertname: TaskboardProbeFailed
+    exp_alerts: []
+  - eval_time: 1m
+    groupname: taskboard-runtime
+    alertname: TaskboardGoroutinesHigh
+    exp_alerts: []
+  - eval_time: 1m
+    groupname: taskboard-runtime
+    alertname: TaskboardGoHeapHigh
+    exp_alerts: []
+- name: low traffic does not page
+  interval: 5s
+  input_series:
+  - series: taskboard_probe_success{job="taskboard-prober",namespace="taskboard-lab"}
+    values: 1x36
+  - series: up{job="taskboard-prober",namespace="taskboard-lab"}
+    values: 1x36
+  - series: taskboard_probe_last_run_timestamp_seconds{job="taskboard-prober",namespace="taskboard-lab"}
+    values: 946684800+5x36
+  - series: taskboard_http_requests_total{job="taskboard",namespace="taskboard-lab",route="GET /api/tasks",code="503"}
+    values: 0+0.1x36
+  - series: taskboard_http_request_duration_seconds_bucket{job="taskboard",namespace="taskboard-lab",route="GET
+      /api/tasks",le="0.25"}
+    values: '0x36'
+  - series: taskboard_http_request_duration_seconds_count{job="taskboard",namespace="taskboard-lab",route="GET
+      /api/tasks"}
+    values: 0+0.1x36
+  alert_rule_test:
+  - eval_time: 1m
+    groupname: taskboard-service
+    alertname: TaskboardHighErrorRate
+    exp_alerts: []
+  - eval_time: 1m
+    groupname: taskboard-service
+    alertname: TaskboardHighLatency
+    exp_alerts: []
+  - eval_time: 1m
+    groupname: taskboard-service
+    alertname: TaskboardProbeFailed
+    exp_alerts: []
+  - eval_time: 1m
+    groupname: taskboard-runtime
+    alertname: TaskboardGoroutinesHigh
+    exp_alerts: []
+  - eval_time: 1m
+    groupname: taskboard-runtime
+    alertname: TaskboardGoHeapHigh
+    exp_alerts: []
+- name: counter reset on one replica does not invent 5xx
+  interval: 5s
+  input_series:
+  - series: taskboard_probe_success{job="taskboard-prober",namespace="taskboard-lab"}
+    values: 1x36
+  - series: up{job="taskboard-prober",namespace="taskboard-lab"}
+    values: 1x36
+  - series: taskboard_probe_last_run_timestamp_seconds{job="taskboard-prober",namespace="taskboard-lab"}
+    values: 946684800+5x36
+  - series: taskboard_http_requests_total{job="taskboard",namespace="taskboard-lab",route="GET /api/tasks",code="200",pod="a"}
+    values: 100+10x5 0+10x30
+  - series: taskboard_http_requests_total{job="taskboard",namespace="taskboard-lab",route="GET /api/tasks",code="200",pod="b"}
+    values: 100+10x36
+  - series: taskboard_http_requests_total{job="taskboard",namespace="taskboard-lab",route="GET /api/tasks",code="503",pod="a"}
+    values: 1x5 0x30
+  alert_rule_test:
+  - eval_time: 1m
+    groupname: taskboard-service
+    alertname: TaskboardHighErrorRate
+    exp_alerts: []
+  - eval_time: 1m
+    groupname: taskboard-service
+    alertname: TaskboardHighLatency
+    exp_alerts: []
+  - eval_time: 1m
+    groupname: taskboard-service
+    alertname: TaskboardProbeFailed
+    exp_alerts: []
+  - eval_time: 1m
+    groupname: taskboard-runtime
+    alertname: TaskboardGoroutinesHigh
+    exp_alerts: []
+  - eval_time: 1m
+    groupname: taskboard-runtime
+    alertname: TaskboardGoHeapHigh
+    exp_alerts: []
+- name: 'failed prober: pending then firing'
+  interval: 5s
+  input_series:
+  - series: taskboard_probe_success{job="taskboard-prober",namespace="taskboard-lab"}
+    values: '0x36'
+  - series: up{job="taskboard-prober",namespace="taskboard-lab"}
+    values: 1x36
+  - series: taskboard_probe_last_run_timestamp_seconds{job="taskboard-prober",namespace="taskboard-lab"}
+    values: 946684800+5x36
+  alert_rule_test:
+  - eval_time: 15s
+    groupname: taskboard-service
+    alertname: TaskboardHighErrorRate
+    exp_alerts: []
+  - eval_time: 15s
+    groupname: taskboard-service
+    alertname: TaskboardHighLatency
+    exp_alerts: []
+  - eval_time: 15s
+    groupname: taskboard-service
+    alertname: TaskboardProbeFailed
+    exp_alerts: []
+  - eval_time: 15s
+    groupname: taskboard-runtime
+    alertname: TaskboardGoroutinesHigh
+    exp_alerts: []
+  - eval_time: 15s
+    groupname: taskboard-runtime
+    alertname: TaskboardGoHeapHigh
+    exp_alerts: []
+  - eval_time: 1m
+    groupname: taskboard-service
+    alertname: TaskboardHighErrorRate
+    exp_alerts: []
+  - eval_time: 1m
+    groupname: taskboard-service
+    alertname: TaskboardHighLatency
+    exp_alerts: []
+  - eval_time: 1m
+    groupname: taskboard-service
+    alertname: TaskboardProbeFailed
+    exp_alerts:
+    - exp_labels:
+        namespace: taskboard-lab
+        service: taskboard
+        component: prober
+        severity: critical
+      exp_annotations:
+        summary: UI and task API probe is unavailable
+        description: The UI/API check is unsuccessful, its exporter is missing or its result is older
+          than 12s, for 20s.
+  - eval_time: 1m
+    groupname: taskboard-runtime
+    alertname: TaskboardGoroutinesHigh
+    exp_alerts: []
+  - eval_time: 1m
+    groupname: taskboard-runtime
+    alertname: TaskboardGoHeapHigh
+    exp_alerts: []
+- name: missing prober must page
+  interval: 5s
+  input_series: []
+  alert_rule_test:
+  - eval_time: 1m
+    groupname: taskboard-service
+    alertname: TaskboardHighErrorRate
+    exp_alerts: []
+  - eval_time: 1m
+    groupname: taskboard-service
+    alertname: TaskboardHighLatency
+    exp_alerts: []
+  - eval_time: 1m
+    groupname: taskboard-service
+    alertname: TaskboardProbeFailed
+    exp_alerts:
+    - exp_labels:
+        namespace: taskboard-lab
+        service: taskboard
+        component: prober
+        severity: critical
+      exp_annotations:
+        summary: UI and task API probe is unavailable
+        description: The UI/API check is unsuccessful, its exporter is missing or its result is older
+          than 12s, for 20s.
+  - eval_time: 1m
+    groupname: taskboard-runtime
+    alertname: TaskboardGoroutinesHigh
+    exp_alerts: []
+  - eval_time: 1m
+    groupname: taskboard-runtime
+    alertname: TaskboardGoHeapHigh
+    exp_alerts: []
+- name: stale prober must page
+  interval: 5s
+  input_series:
+  - series: taskboard_probe_success{job="taskboard-prober",namespace="taskboard-lab"}
+    values: 1x36
+  - series: up{job="taskboard-prober",namespace="taskboard-lab"}
+    values: 1x36
+  - series: taskboard_probe_last_run_timestamp_seconds{job="taskboard-prober",namespace="taskboard-lab"}
+    values: 946684800x36
+  alert_rule_test:
+  - eval_time: 1m
+    groupname: taskboard-service
+    alertname: TaskboardHighErrorRate
+    exp_alerts: []
+  - eval_time: 1m
+    groupname: taskboard-service
+    alertname: TaskboardHighLatency
+    exp_alerts: []
+  - eval_time: 1m
+    groupname: taskboard-service
+    alertname: TaskboardProbeFailed
+    exp_alerts:
+    - exp_labels:
+        namespace: taskboard-lab
+        service: taskboard
+        component: prober
+        severity: critical
+      exp_annotations:
+        summary: UI and task API probe is unavailable
+        description: The UI/API check is unsuccessful, its exporter is missing or its result is older
+          than 12s, for 20s.
+  - eval_time: 1m
+    groupname: taskboard-runtime
+    alertname: TaskboardGoroutinesHigh
+    exp_alerts: []
+  - eval_time: 1m
+    groupname: taskboard-runtime
+    alertname: TaskboardGoHeapHigh
+    exp_alerts: []
+- name: runtime exact thresholds do not fire
+  interval: 5s
+  input_series:
+  - series: taskboard_probe_success{job="taskboard-prober",namespace="taskboard-lab"}
+    values: 1x36
+  - series: up{job="taskboard-prober",namespace="taskboard-lab"}
+    values: 1x36
+  - series: taskboard_probe_last_run_timestamp_seconds{job="taskboard-prober",namespace="taskboard-lab"}
+    values: 946684800+5x36
+  - series: go_goroutines{job="taskboard",namespace="taskboard-lab",pod="a"}
+    values: 200x36
+  - series: go_memstats_heap_alloc_bytes{job="taskboard",namespace="taskboard-lab",pod="a"}
+    values: 33554432x36
+  alert_rule_test:
+  - eval_time: 1m
+    groupname: taskboard-service
+    alertname: TaskboardHighErrorRate
+    exp_alerts: []
+  - eval_time: 1m
+    groupname: taskboard-service
+    alertname: TaskboardHighLatency
+    exp_alerts: []
+  - eval_time: 1m
+    groupname: taskboard-service
+    alertname: TaskboardProbeFailed
+    exp_alerts: []
+  - eval_time: 1m
+    groupname: taskboard-runtime
+    alertname: TaskboardGoroutinesHigh
+    exp_alerts: []
+  - eval_time: 1m
+    groupname: taskboard-runtime
+    alertname: TaskboardGoHeapHigh
+    exp_alerts: []
+- name: runtime sustained growth and recovery
+  interval: 5s
+  input_series:
+  - series: taskboard_probe_success{job="taskboard-prober",namespace="taskboard-lab"}
+    values: 1x36
+  - series: up{job="taskboard-prober",namespace="taskboard-lab"}
+    values: 1x36
+  - series: taskboard_probe_last_run_timestamp_seconds{job="taskboard-prober",namespace="taskboard-lab"}
+    values: 946684800+5x36
+  - series: go_goroutines{job="taskboard",namespace="taskboard-lab",pod="a"}
+    values: 301x18 10x18
+  - series: go_memstats_heap_alloc_bytes{job="taskboard",namespace="taskboard-lab",pod="a"}
+    values: 50331648x18 2097152x18
+  alert_rule_test:
+  - eval_time: 20s
+    groupname: taskboard-service
+    alertname: TaskboardHighErrorRate
+    exp_alerts: []
+  - eval_time: 20s
+    groupname: taskboard-service
+    alertname: TaskboardHighLatency
+    exp_alerts: []
+  - eval_time: 20s
+    groupname: taskboard-service
+    alertname: TaskboardProbeFailed
+    exp_alerts: []
+  - eval_time: 20s
+    groupname: taskboard-runtime
+    alertname: TaskboardGoroutinesHigh
+    exp_alerts: []
+  - eval_time: 20s
+    groupname: taskboard-runtime
+    alertname: TaskboardGoHeapHigh
+    exp_alerts: []
+  - eval_time: 1m
+    groupname: taskboard-service
+    alertname: TaskboardHighErrorRate
+    exp_alerts: []
+  - eval_time: 1m
+    groupname: taskboard-service
+    alertname: TaskboardHighLatency
+    exp_alerts: []
+  - eval_time: 1m
+    groupname: taskboard-service
+    alertname: TaskboardProbeFailed
+    exp_alerts: []
+  - eval_time: 1m
+    groupname: taskboard-runtime
+    alertname: TaskboardGoroutinesHigh
+    exp_alerts:
+    - exp_labels:
+        namespace: taskboard-lab
+        service: taskboard
+        component: go
+        severity: warning
+        job: taskboard
+        pod: a
+      exp_annotations:
+        summary: Go goroutines exceed 200
+        description: Goroutine count stays above 200 for 30s; investigate blocked requests or goroutine
+          leaks.
+  - eval_time: 1m
+    groupname: taskboard-runtime
+    alertname: TaskboardGoHeapHigh
+    exp_alerts:
+    - exp_labels:
+        namespace: taskboard-lab
+        service: taskboard
+        component: go
+        severity: warning
+        job: taskboard
+        pod: a
+      exp_annotations:
+        summary: Live Go heap exceeds 32 MiB
+        description: Live Go heap stays above 32 MiB for 30s; lab container memory limit is 128 MiB.
+  - eval_time: 2m
+    groupname: taskboard-service
+    alertname: TaskboardHighErrorRate
+    exp_alerts: []
+  - eval_time: 2m
+    groupname: taskboard-service
+    alertname: TaskboardHighLatency
+    exp_alerts: []
+  - eval_time: 2m
+    groupname: taskboard-service
+    alertname: TaskboardProbeFailed
+    exp_alerts: []
+  - eval_time: 2m
+    groupname: taskboard-runtime
+    alertname: TaskboardGoroutinesHigh
+    exp_alerts: []
+  - eval_time: 2m
+    groupname: taskboard-runtime
+    alertname: TaskboardGoHeapHigh
+    exp_alerts: []
+- name: short runtime spike does not fire
+  interval: 5s
+  input_series:
+  - series: taskboard_probe_success{job="taskboard-prober",namespace="taskboard-lab"}
+    values: 1x36
+  - series: up{job="taskboard-prober",namespace="taskboard-lab"}
+    values: 1x36
+  - series: taskboard_probe_last_run_timestamp_seconds{job="taskboard-prober",namespace="taskboard-lab"}
+    values: 946684800+5x36
+  - series: go_goroutines{job="taskboard",namespace="taskboard-lab",pod="a"}
+    values: 301x4 10x32
+  alert_rule_test:
+  - eval_time: 20s
+    groupname: taskboard-service
+    alertname: TaskboardHighErrorRate
+    exp_alerts: []
+  - eval_time: 20s
+    groupname: taskboard-service
+    alertname: TaskboardHighLatency
+    exp_alerts: []
+  - eval_time: 20s
+    groupname: taskboard-service
+    alertname: TaskboardProbeFailed
+    exp_alerts: []
+  - eval_time: 20s
+    groupname: taskboard-runtime
+    alertname: TaskboardGoroutinesHigh
+    exp_alerts: []
+  - eval_time: 20s
+    groupname: taskboard-runtime
+    alertname: TaskboardGoHeapHigh
+    exp_alerts: []
+  - eval_time: 1m
+    groupname: taskboard-service
+    alertname: TaskboardHighErrorRate
+    exp_alerts: []
+  - eval_time: 1m
+    groupname: taskboard-service
+    alertname: TaskboardHighLatency
+    exp_alerts: []
+  - eval_time: 1m
+    groupname: taskboard-service
+    alertname: TaskboardProbeFailed
+    exp_alerts: []
+  - eval_time: 1m
+    groupname: taskboard-runtime
+    alertname: TaskboardGoroutinesHigh
+    exp_alerts: []
+  - eval_time: 1m
+    groupname: taskboard-runtime
+    alertname: TaskboardGoHeapHigh
+    exp_alerts: []
+- name: other namespaces excluded
+  interval: 5s
+  input_series:
+  - series: taskboard_probe_success{job="taskboard-prober",namespace="taskboard-lab"}
+    values: 1x36
+  - series: up{job="taskboard-prober",namespace="taskboard-lab"}
+    values: 1x36
+  - series: taskboard_probe_last_run_timestamp_seconds{job="taskboard-prober",namespace="taskboard-lab"}
+    values: 946684800+5x36
+  - series: taskboard_http_requests_total{job="taskboard",namespace="other",route="GET /api/tasks",code="503"}
+    values: 0+20x36
+  - series: go_goroutines{job="taskboard",namespace="other",pod="a"}
+    values: 999x36
+  - series: go_memstats_heap_alloc_bytes{job="taskboard",namespace="other",pod="a"}
+    values: 99000000x36
+  alert_rule_test:
+  - eval_time: 1m
+    groupname: taskboard-service
+    alertname: TaskboardHighErrorRate
+    exp_alerts: []
+  - eval_time: 1m
+    groupname: taskboard-service
+    alertname: TaskboardHighLatency
+    exp_alerts: []
+  - eval_time: 1m
+    groupname: taskboard-service
+    alertname: TaskboardProbeFailed
+    exp_alerts: []
+  - eval_time: 1m
+    groupname: taskboard-runtime
+    alertname: TaskboardGoroutinesHigh
+    exp_alerts: []
+  - eval_time: 1m
+    groupname: taskboard-runtime
+    alertname: TaskboardGoHeapHigh
+    exp_alerts: []
