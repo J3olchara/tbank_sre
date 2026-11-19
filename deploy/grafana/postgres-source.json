@@ -1,0 +1,16 @@
+{
+  "dashboard_id": 9628,
+  "download_url": "https://grafana.com/api/dashboards/9628/revisions/latest/download",
+  "upstream_sha256": "521bac34065bcadedf255fc384550ae0528e9a74e91b4475e583b6afe9c39cc7",
+  "upstream_version": 1,
+  "changes": [
+    "fixed VictoriaMetrics datasource UID and exporter labels",
+    "singlestat/graph converted to stat/timeseries",
+    "process metrics labelled as exporter, memory kept as gauges",
+    "tuple/session counters use counts, not bytes; sessions grouped by database/state",
+    "PG17 obsolete bgwriter/checkpoint panels 64/70 removed",
+    "pg_static version panel replaced by pg_up",
+    "unavailable postmaster start-time panel replaced by database size",
+    "database and instance variables use available metric labels"
+  ]
+}
