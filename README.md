@@ -5,7 +5,7 @@
 ```sh
 make up              # сборка образа, PostgreSQL, миграции, приложение
 make integration     # проверка CRUD на работающем приложении
-make check           # форматирование, vet, race-тесты, сборка React (Go + Node)
+make check           # fmt, vet, race, React, JSON Grafana (Go + Node + Python 3)
 make archive         # artifacts/homework-01.zip для сдачи
 make down            # остановить, сохранив данные PostgreSQL
 ```
@@ -97,3 +97,17 @@ make alerting-forward
 [Инструкция](homework/06/README.md), [отчёт](homework/06/Отчёт.md).
 Три алерта сервиса и два Go-рантайма; vmalert → Alertmanager → webhook с журналом на PVC.
 Архив со скриншотами срабатывания и уведомлениями: `make archive-hw06`.
+
+## Домашняя работа 07 — Grafana
+
+```sh
+make grafana-install grafana-validate grafana-render
+make grafana-forward                  # http://127.0.0.1:3000
+# в другом терминале
+make grafana-import-postgres grafana-export
+```
+
+[Инструкция](homework/07/README.md), [отчёт со скриншотами](homework/07/Отчёт.md).
+Дашборд Taskboard: RED, Go runtime, бизнес-метрики и отдельная группа SLA пробера.
+PostgreSQL: импортированный dashboard №9628. Источник — VictoriaMetrics.
+Для сдачи: `make grafana-record grafana-render archive-hw07`.
